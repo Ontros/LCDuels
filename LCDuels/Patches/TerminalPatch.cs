@@ -14,7 +14,7 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchStart(ref int ___groupCredits)
         {
-            Random random = new Random(69);
+            Random random = new Random(2);
             ___groupCredits = random.Next(100, 1000);
         }
     }

@@ -15,7 +15,7 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchChooseNewRandomMapSeed(ref float ___randomMapSeed)
         {
-            ___randomMapSeed = 64;
+            ___randomMapSeed = 2;
         }
     }
 }

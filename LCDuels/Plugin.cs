@@ -39,6 +39,7 @@ namespace LCDuels
             harmony.PatchAll(typeof(StartOfRoundPatch));
             harmony.PatchAll(typeof(RoundManagerPatch));
             harmony.PatchAll(typeof(TerminalPatch));
+            harmony.PatchAll(typeof(HUDManagerPatch));
         }
     }
 }
