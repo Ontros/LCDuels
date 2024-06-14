@@ -19,9 +19,11 @@ namespace LCDuels
 
         private readonly Harmony harmony = new Harmony(modGUID);
 
-        private static LCDuelsModBase Instance;
+        public static LCDuelsModBase Instance;
 
         internal ManualLogSource mls;
+        
+        public int seedFromServer;
 
         void Awake()
         {
