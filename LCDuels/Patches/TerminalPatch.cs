@@ -33,6 +33,11 @@ namespace LCDuels.Patches
                     LCDuelsModBase.Instance.seedFromServer = int.Parse(responseBody);
                     Random lmfao = new Random(LCDuelsModBase.Instance.seedFromServer);
                     ___groupCredits = lmfao.Next(100, 1000);
+                Random ra = new Random(LCDuelsModBase.Instance.seedFromServer);
+                StartOfRound.Instance.ChangeLevel(ra.Next(0, StartOfRound.Instance.levels.Length));
+                StartOfRound.Instance.SetPlanetsWeather();
+                StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
+
             }
         }
     }
