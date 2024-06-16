@@ -25,6 +25,20 @@ namespace LCDuels
         
         public int seedFromServer;
 
+        public int getRandomMapID()
+        {
+                Random ra = new Random(seedFromServer);
+            int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
+            if (output < 3)
+            {
+                return output;
+            }
+            else
+            {
+                return output + 1;
+            }
+        }
+
         void Awake()
         {
             if (Instance == null)

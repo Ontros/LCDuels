@@ -15,7 +15,8 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchStart(ref int ___groupCredits)
         {
-            string url = "http://10.10.10.215:3000/";
+            //string url = "http://10.10.10.215:3000/";
+            string url = "http://192.168.0.103:3000/";
 
             // Create an instance of HttpClient
             using (HttpClient client = new HttpClient())
@@ -33,8 +34,8 @@ namespace LCDuels.Patches
                     LCDuelsModBase.Instance.seedFromServer = int.Parse(responseBody);
                     Random lmfao = new Random(LCDuelsModBase.Instance.seedFromServer);
                     ___groupCredits = lmfao.Next(100, 1000);
-                Random ra = new Random(LCDuelsModBase.Instance.seedFromServer);
-                StartOfRound.Instance.ChangeLevel(ra.Next(0, StartOfRound.Instance.levels.Length));
+                StartOfRound.Instance.randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
+                StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID());
                 StartOfRound.Instance.SetPlanetsWeather();
                 StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
 
