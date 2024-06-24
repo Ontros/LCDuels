@@ -13,10 +13,14 @@ namespace LCDuels.Patches
     {
         [HarmonyPatch("Start")]
         [HarmonyPostfix]
-        static void patchStart(ref int ___groupCredits)
+        static bool patchStart(ref int ___groupCredits)
         {
+            if (LCDuelsModBase.playing)
+            {
+                return true;
+            }
             //string url = "http://10.10.10.215:3000/";
-            string url = "http://192.168.0.103:3000/";
+            string url = "http://192.168.100.30:3000/";
 
             // Create an instance of HttpClient
             using (HttpClient client = new HttpClient())
@@ -39,7 +43,9 @@ namespace LCDuels.Patches
                 StartOfRound.Instance.SetPlanetsWeather();
                 StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
 
+                LCDuelsModBase.Instance.CreateInGameStatusText();
             }
+            return true;
         }
     }
 }

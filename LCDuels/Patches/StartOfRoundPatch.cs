@@ -16,10 +16,12 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchChooseNewRandomMapSeed(ref float ___randomMapSeed)
         {
-            StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID());
-            ___randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
-            //StartOfRound.Instance.SetPlanetsWeather();
-            StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
+            if (LCDuelsModBase.playing)
+            {
+                StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID());
+                ___randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
+                StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
+            }
         }
     }
 }

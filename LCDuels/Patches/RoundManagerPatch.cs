@@ -15,28 +15,40 @@ namespace LCDuels.Patches
         [HarmonyPrefix]
         static void prefixYRotationThatFacesTheFarthestFromPosition(ref bool ___hasInitializedLevelRandomSeed)
         {
-            ___hasInitializedLevelRandomSeed = false;
+            if (LCDuelsModBase.playing)
+            {
+                ___hasInitializedLevelRandomSeed = false;
+            }
         }
 
         [HarmonyPatch(nameof(RoundManager.YRotationThatFacesTheFarthestFromPosition))]
         [HarmonyPostfix]
         static void postfixYRotationThatFacesTheFarthestFromPosition(ref bool ___hasInitializedLevelRandomSeed)
         {
-            ___hasInitializedLevelRandomSeed = true;
+            if (LCDuelsModBase.playing)
+            {
+                ___hasInitializedLevelRandomSeed = true;
+            }
         }
 
         [HarmonyPatch(nameof(RoundManager.YRotationThatFacesTheNearestFromPosition))]
         [HarmonyPrefix]
         static void prefixYRotationThatFacesTheNearestFromPosition(ref bool ___hasInitializedLevelRandomSeed)
         {
-            ___hasInitializedLevelRandomSeed = false;
+            if (LCDuelsModBase.playing)
+            {
+                ___hasInitializedLevelRandomSeed = false;
+            }
         }
 
         [HarmonyPatch(nameof(RoundManager.YRotationThatFacesTheNearestFromPosition))]
         [HarmonyPostfix]
         static void postfixYRotationThatFacesTheNearestFromPosition(ref bool ___hasInitializedLevelRandomSeed)
         {
-            ___hasInitializedLevelRandomSeed = true;
+            if (LCDuelsModBase.playing)
+            {
+                ___hasInitializedLevelRandomSeed = true;
+            }
         }
     }
 }

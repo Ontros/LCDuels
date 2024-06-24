@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 
 namespace LCDuels.Patches
@@ -27,5 +28,25 @@ namespace LCDuels.Patches
         //    }
         //    UnityEngine.Debug.Log(outputs[1]+ ","+ outputs[2] + "," + outputs[3]);
         //}
+        [HarmonyPatch("ChangeControlTip")]
+        [HarmonyPrefix]
+        static bool changeControlTipPatch()
+        {
+            return false;
+        }
+
+        [HarmonyPatch("ChangeControlTipMultiple")]
+        [HarmonyPrefix]
+        static bool changeControlTipMultiplePatch()
+        {
+            return false;
+        }
+
+        [HarmonyPatch("ClearControlTips")]
+        [HarmonyPrefix]
+        static bool clearControlTipPatch()
+        {
+            return false;
+        }
     }
 }

@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace LCDuels
 {
@@ -25,9 +28,13 @@ namespace LCDuels
         
         public int seedFromServer;
 
+        public static TextMeshPro inGameStatusText;
+
+        public static bool playing = true;
+
         public int getRandomMapID()
         {
-                Random ra = new Random(seedFromServer);
+            System.Random ra = new System.Random(seedFromServer);
             int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
             if (output < 3)
             {
@@ -37,6 +44,24 @@ namespace LCDuels
             {
                 return output + 1;
             }
+        }
+
+        public void CreateInGameStatusText()
+        {
+            HUDManager.Instance.controlTipLines[0].text = "TEST";
+            GameObject inGameTextGO = new GameObject("inGameStatusTextGO");
+            CanvasGroup canvas = HUDManager.Instance.Tooltips.canvasGroup;
+            inGameTextGO.transform.SetParent(canvas.transform);
+            inGameStatusText = inGameTextGO.AddComponent<TextMeshPro>();
+            inGameStatusText.text = "TEST";
+            //inGameStatusText.alignment = TextAlignmentOptions.Center;
+            ////inGameStatusText.font = Resources.GetBuiltinResource<TMP_FontAsset>("Arial.ttf");
+            //inGameStatusText.color = Color.white;
+            //inGameStatusText.fontSize = 36;
+            //RectTransform textRectTransform = inGameStatusText.GetComponent<RectTransform>();
+            //RectTransform rectTransform = inGameTextGO.GetComponent<RectTransform>();
+            //rectTransform.sizeDelta = new Vector2(600, 200); // Width, Height
+            //rectTransform.anchoredPosition = new Vector2(0, 0); // Position
         }
 
         void Awake()
