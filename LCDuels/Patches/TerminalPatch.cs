@@ -13,18 +13,16 @@ namespace LCDuels.Patches
     {
         [HarmonyPatch("Start")]
         [HarmonyPostfix]
-        static bool patchStart(ref int ___groupCredits)
+        static void patchStart(ref int ___groupCredits)
         {
             if (LCDuelsModBase.playing)
             {
-                return true;
-            }
-            //string url = "http://10.10.10.215:3000/";
-            string url = "http://192.168.100.30:3000/";
+                //string url = "http://10.10.10.215:3000/";
+                string url = "http://192.168.100.30:3000/";
 
-            // Create an instance of HttpClient
-            using (HttpClient client = new HttpClient())
-            {
+                // Create an instance of HttpClient
+                using (HttpClient client = new HttpClient())
+                {
                     // Perform the GET request
                     HttpResponseMessage response = client.GetAsync(url).Result;
 
@@ -38,14 +36,14 @@ namespace LCDuels.Patches
                     LCDuelsModBase.Instance.seedFromServer = int.Parse(responseBody);
                     Random lmfao = new Random(LCDuelsModBase.Instance.seedFromServer);
                     ___groupCredits = lmfao.Next(100, 1000);
-                StartOfRound.Instance.randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
-                StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID());
-                StartOfRound.Instance.SetPlanetsWeather();
-                StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
+                    StartOfRound.Instance.randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
+                    StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID());
+                    StartOfRound.Instance.SetPlanetsWeather();
+                    StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
 
-                LCDuelsModBase.Instance.CreateInGameStatusText();
+                    LCDuelsModBase.Instance.UpdateInGameStatusText();
+                }
             }
-            return true;
         }
     }
 }

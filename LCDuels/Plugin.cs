@@ -6,10 +6,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Net.WebSockets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 namespace LCDuels
 {
@@ -32,6 +35,16 @@ namespace LCDuels
 
         public static bool playing = true;
 
+        public string enemyPlayerName = "Feity";
+
+        public string enemyPlayerScrap = "Equal loot amount"; //0 same, 1 less, 2 more
+
+        public string enemyPlayerLocation = "in ship"; //0 ship, 1 outisde, 2 inside 
+
+        public bool gameReady = false;
+
+        ClientWebSocket localWS = null;
+
         public int getRandomMapID()
         {
             System.Random ra = new System.Random(seedFromServer);
@@ -46,22 +59,11 @@ namespace LCDuels
             }
         }
 
-        public void CreateInGameStatusText()
+        public void UpdateInGameStatusText()
         {
-            HUDManager.Instance.controlTipLines[0].text = "TEST";
-            GameObject inGameTextGO = new GameObject("inGameStatusTextGO");
-            CanvasGroup canvas = HUDManager.Instance.Tooltips.canvasGroup;
-            inGameTextGO.transform.SetParent(canvas.transform);
-            inGameStatusText = inGameTextGO.AddComponent<TextMeshPro>();
-            inGameStatusText.text = "TEST";
-            //inGameStatusText.alignment = TextAlignmentOptions.Center;
-            ////inGameStatusText.font = Resources.GetBuiltinResource<TMP_FontAsset>("Arial.ttf");
-            //inGameStatusText.color = Color.white;
-            //inGameStatusText.fontSize = 36;
-            //RectTransform textRectTransform = inGameStatusText.GetComponent<RectTransform>();
-            //RectTransform rectTransform = inGameTextGO.GetComponent<RectTransform>();
-            //rectTransform.sizeDelta = new Vector2(600, 200); // Width, Height
-            //rectTransform.anchoredPosition = new Vector2(0, 0); // Position
+            HUDManager.Instance.controlTipLines[0].text = "VS: "+enemyPlayerName;
+            HUDManager.Instance.controlTipLines[1].text = enemyPlayerScrap;
+            HUDManager.Instance.controlTipLines[2].text = "He is "+enemyPlayerLocation;
         }
 
         void Awake()
@@ -82,6 +84,117 @@ namespace LCDuels
             harmony.PatchAll(typeof(TerminalPatch));
             harmony.PatchAll(typeof(HUDManagerPatch));
             harmony.PatchAll(typeof(StormyWeatherPatch));
+            harmony.PatchAll(typeof(StartMatchLeverPatch));
+
+            Task.Run(InitWS);
+        }
+
+        public async Task InitWS()
+        {
+            Uri serverUri = new Uri("ws://localhost:8080");
+            using (ClientWebSocket webSocket = new ClientWebSocket())
+            {
+                localWS = webSocket;
+                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+                mls.LogInfo("Connected to server");
+
+                _ = Register(webSocket, "yourSteamId", "yourSteamUsername");
+                // Start receiving messages
+                await ReceiveMessages(webSocket);
+            }
+        }
+
+        async Task ReceiveMessages(ClientWebSocket webSocket)
+        {
+            byte[] buffer = new byte[1024];
+
+            while (webSocket.State == WebSocketState.Open)
+            {
+                mls.LogInfo("Starting while loop");
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                HandleMessage(message);
+            }
+            mls.LogInfo("Socket closed");
+        }
+
+        void HandleMessage(string message)
+        {
+            var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(message);
+            if (data == null || !data.ContainsKey("type"))
+            {
+                mls.LogInfo("Invalid message received");
+                return;
+            }
+
+            string messageType = data["type"].ToString();
+            switch (messageType)
+            {
+                case "match_found":
+                    string opponentId = data["opponentId"].ToString();
+                    string opponentUsername = data["opponentUsername"].ToString();
+                    mls.LogInfo($"Match found! Opponent: {opponentUsername} (ID: {opponentId})");
+                    break;
+
+                case "game_start":
+                    mls.LogInfo("Game started!");
+                    gameReady = true;
+                    _ = HandleGameStart();
+                    break;
+
+                case "position":
+                    string position = data["value"].ToString();
+                    mls.LogInfo($"Opponent position: {position}");
+                    break;
+
+                case "score":
+                    string scoreComparison = data["value"].ToString();
+                    mls.LogInfo($"Opponent score is {scoreComparison}");
+                    break;
+
+                case "opponent_left":
+                    mls.LogInfo("Your opponent has left the game.");
+                    break;
+
+                default:
+                    mls.LogInfo($"Unknown message type: {messageType}");
+                    break;
+            }
+            mls.LogInfo("Received: " + message);
+            // Parse and handle the message as needed
+        }
+
+        async Task HandleGameStart()
+        {
+            mls.LogInfo("Handling game start"+ StartOfRound.Instance.IsServer+StartOfRound.Instance.inShipPhase);
+            await Task.Run(() =>
+            {
+                //It get stuck somewhere here idk why pls help
+
+                //StartOfRound.Instance.StartGame();
+                //StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
+                //matchLever.playersManager.StartGame();
+            });
+            mls.LogInfo("Handled game start");
+        }
+
+        async Task Register(ClientWebSocket webSocket, string steamId, string steamUsername)
+        {
+            var message = new
+            {
+                type = "register",
+                steamId,
+                steamUsername
+            };
+            await SendMessage(message);
+        }
+
+        public async Task SendMessage(object message)
+        {
+            string jsonMessage = Newtonsoft.Json.JsonConvert.SerializeObject(message);
+            byte[] bytes = Encoding.UTF8.GetBytes(jsonMessage);
+            await localWS.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            mls.LogInfo("Sent message");
         }
     }
 }

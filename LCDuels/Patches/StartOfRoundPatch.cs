@@ -18,10 +18,24 @@ namespace LCDuels.Patches
         {
             if (LCDuelsModBase.playing)
             {
+                LCDuelsModBase.Instance.mls.LogInfo("patchChooseNewRandomMapSeed called");
                 StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID());
                 ___randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
                 StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
             }
+        }
+
+        [HarmonyPatch(nameof(StartOfRound.StartGame))]
+        [HarmonyPrefix]
+        static void patchtest1()
+        {
+             LCDuelsModBase.Instance.mls.LogInfo("startgame called");
+        }
+        [HarmonyPatch(nameof(StartOfRound.StartGame))]
+        [HarmonyPostfix]
+        static void patchtest2()
+        {
+             LCDuelsModBase.Instance.mls.LogInfo("startgame finished");
         }
     }
 }
