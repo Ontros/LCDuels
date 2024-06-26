@@ -14,6 +14,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
 using DunGen;
+using System.Collections;
 
 namespace LCDuels
 {
@@ -52,7 +53,6 @@ namespace LCDuels
         {
             System.Random ra = new System.Random(seedFromServer);
             int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
-            return 2;
             if (output < 3)
             {
                 return output;
@@ -146,8 +146,32 @@ namespace LCDuels
                     StartOfRound.Instance.randomMapSeed = seedFromServer;
                     StartOfRound.Instance.ChangeLevel(getRandomMapID());
                     StartOfRound.Instance.SetPlanetsWeather();
-                    StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
                     UpdateInGameStatusText();
+                    string text;
+                    if (StartOfRound.Instance.currentLevel.currentWeather != LevelWeatherType.None)
+                    {
+                        text = "Weather: " + StartOfRound.Instance.currentLevel.currentWeather.ToString();
+                    }
+                    else
+                    {
+                        text = "";
+                    }
+                    string levelDescription = StartOfRound.Instance.currentLevel.LevelDescription;
+                    StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
+                    {
+                        "Orbiting: ",
+                        StartOfRound.Instance.currentLevel.PlanetName,
+                        "\n",
+                        levelDescription,
+                        "\n",
+                        text
+                    });
+                    //mls.LogInfo("Before task");
+                    //Task.Run(() => {
+                    //    mls.LogInfo("Inside task");
+                    //    StartCoroutine(updateTheScreen());
+                    //});
+                    //    mls.LogInfo("After task");
                     break;
 
                 case "game_start":
@@ -214,10 +238,10 @@ namespace LCDuels
 
         async Task HandleGameStart()
         {
-            mls.LogInfo("Handling game start"+ StartOfRound.Instance.IsServer+StartOfRound.Instance.inShipPhase);
+            mls.LogInfo("Handling game start");
             await Task.Run(async () =>
             {
-                //It get stuck somewhere here idk why pls help
+                ////It get stuck somewhere here idk why pls help
 
                 //StartOfRound.Instance.StartGame();
                 //matchLever.playersManager.StartGame();
@@ -233,7 +257,7 @@ namespace LCDuels
                 matchLever.triggerScript.disabledHoverTip = "[Wait for ship to land]";
                 mls.LogInfo("LOADING GAME6");
                 StartOfRound.Instance.currentPlanetAnimator.SetTrigger("LandOnPlanet");
-                mls.LogInfo("LOADING GAME7"+ StartOfRound.Instance.currentLevel.name);
+                mls.LogInfo("LOADING GAME7" + StartOfRound.Instance.currentLevel.name);
                 StartOfRound.Instance.NetworkManager.SceneManager.LoadScene(StartOfRound.Instance.currentLevel.name, UnityEngine.SceneManagement.LoadSceneMode.Additive);
                 //mls.LogInfo("LOADING GAME8");
                 //RuntimeDungeon RD = UnityEngine.Object.FindFirstObjectByType<RuntimeDungeon>();
