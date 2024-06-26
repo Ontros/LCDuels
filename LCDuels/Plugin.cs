@@ -36,7 +36,7 @@ namespace LCDuels
 
         public static bool playing = true;
 
-        public string enemyPlayerName = "Feity";
+        public string enemyPlayerName = "Unknown";
 
         public string enemyPlayerScrap = "Equal loot amount"; //0 same, 1 less, 2 more
 
@@ -46,10 +46,13 @@ namespace LCDuels
 
         ClientWebSocket localWS = null;
 
+        public Terminal terminal = null;
+
         public int getRandomMapID()
         {
             System.Random ra = new System.Random(seedFromServer);
             int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
+            return 2;
             if (output < 3)
             {
                 return output;
@@ -63,7 +66,7 @@ namespace LCDuels
         public void UpdateInGameStatusText()
         {
             HUDManager.Instance.controlTipLines[0].text = "VS: "+enemyPlayerName;
-            HUDManager.Instance.controlTipLines[1].text = enemyPlayerScrap;
+            HUDManager.Instance.controlTipLines[1].text = "You have "+enemyPlayerScrap;
             HUDManager.Instance.controlTipLines[2].text = "He is "+enemyPlayerLocation;
         }
 
@@ -87,7 +90,6 @@ namespace LCDuels
             harmony.PatchAll(typeof(StormyWeatherPatch));
             harmony.PatchAll(typeof(StartMatchLeverPatch));
 
-            Task.Run(InitWS);
         }
 
         public async Task InitWS()
@@ -133,8 +135,19 @@ namespace LCDuels
             {
                 case "match_found":
                     string opponentId = data["opponentId"].ToString();
-                    string opponentUsername = data["opponentUsername"].ToString();
-                    mls.LogInfo($"Match found! Opponent: {opponentUsername} (ID: {opponentId})");
+                    enemyPlayerName = data["opponentUsername"].ToString();
+                    seedFromServer = int.Parse(data["seed"].ToString());
+                    mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
+                    System.Random lmfao = new System.Random(seedFromServer);
+                    terminal.groupCredits = lmfao.Next(100, 1000);
+                    StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
+                    matchLever.triggerScript.disabledHoverTip = "[Pull to get ready]";
+                    matchLever.triggerScript.interactable = true;
+                    StartOfRound.Instance.randomMapSeed = seedFromServer;
+                    StartOfRound.Instance.ChangeLevel(getRandomMapID());
+                    StartOfRound.Instance.SetPlanetsWeather();
+                    StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
+                    UpdateInGameStatusText();
                     break;
 
                 case "game_start":
@@ -145,12 +158,46 @@ namespace LCDuels
 
                 case "position":
                     string position = data["value"].ToString();
-                    mls.LogInfo($"Opponent position: {position}");
+                    switch (position)
+                    {
+                        case "0":
+                            enemyPlayerLocation = "in ship";
+                            break;
+                        case "1":
+                            enemyPlayerLocation = "outside";
+                            break;
+                        case "2":
+                            enemyPlayerLocation = "inside";
+                            break;
+                        default:
+                            enemyPlayerLocation = "data error";
+                            break;
+
+                    }
+                    mls.LogInfo($"Opponent position: {enemyPlayerLocation}");
+                    UpdateInGameStatusText();
                     break;
 
                 case "score":
-                    string scoreComparison = data["value"].ToString();
-                    mls.LogInfo($"Opponent score is {scoreComparison}");
+                    string scoreComparasion = data["value"].ToString();
+                    switch (scoreComparasion)
+                    {
+                        case "0":
+                            enemyPlayerScrap = "equal loot amount";
+                            break;
+                        case "1":
+                            enemyPlayerScrap = "less loot";
+                            break;
+                        case "2":
+                            enemyPlayerScrap = "more loot";
+                            break;
+                        default:
+                            enemyPlayerScrap = "data error";
+                            break;
+
+                    }
+                    mls.LogInfo($"Opponent score is {enemyPlayerScrap}");
+                    UpdateInGameStatusText();
                     break;
 
                 case "opponent_left":
