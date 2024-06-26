@@ -45,6 +45,8 @@ namespace LCDuels
 
         public bool gameReady = false;
 
+        public bool isInShip = true;
+
         ClientWebSocket localWS = null;
 
         public Terminal terminal = null;
@@ -161,11 +163,8 @@ namespace LCDuels
                     string levelDescription = StartOfRound.Instance.currentLevel.LevelDescription;
                     StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
                     {
-                        "Orbiting: ",
+                        "Pull the lever to get ready\nOrbiting: ",
                         StartOfRound.Instance.currentLevel.PlanetName,
-                        "\n",
-                        levelDescription,
-                        "\n",
                         text
                     });
                     break;
