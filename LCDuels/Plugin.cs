@@ -13,6 +13,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
+using DunGen;
 
 namespace LCDuels
 {
@@ -167,13 +168,38 @@ namespace LCDuels
         async Task HandleGameStart()
         {
             mls.LogInfo("Handling game start"+ StartOfRound.Instance.IsServer+StartOfRound.Instance.inShipPhase);
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 //It get stuck somewhere here idk why pls help
 
                 //StartOfRound.Instance.StartGame();
-                //StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
                 //matchLever.playersManager.StartGame();
+                mls.LogInfo("LOADING GAME1");
+                StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
+                mls.LogInfo("LOADING GAME2");
+                GameNetworkManager.Instance.gameHasStarted = true;
+                mls.LogInfo("LOADING GAME3");
+                StartOfRound.Instance.inShipPhase = false;
+                mls.LogInfo("LOADING GAME4");
+                StartOfRound.Instance.fullyLoadedPlayers.Clear();
+                mls.LogInfo("LOADING GAME5");
+                matchLever.triggerScript.disabledHoverTip = "[Wait for ship to land]";
+                mls.LogInfo("LOADING GAME6");
+                StartOfRound.Instance.currentPlanetAnimator.SetTrigger("LandOnPlanet");
+                mls.LogInfo("LOADING GAME7"+ StartOfRound.Instance.currentLevel.name);
+                StartOfRound.Instance.NetworkManager.SceneManager.LoadScene(StartOfRound.Instance.currentLevel.name, UnityEngine.SceneManagement.LoadSceneMode.Additive);
+                //mls.LogInfo("LOADING GAME8");
+                //RuntimeDungeon RD = UnityEngine.Object.FindFirstObjectByType<RuntimeDungeon>();
+                ////mls.LogInfo(UnityEngine.Object.FindFirstObjectByType<RuntimeDungeon>().ToString());
+                //if (!RD)
+                //{
+                //    mls.LogInfo("No RD");
+
+                //}
+                //RoundManager.Instance.GenerateNewLevelClientRpc(seedFromServer, StartOfRound.Instance.currentLevel.levelID);
+                await Task.Delay(500);
+                mls.LogInfo("LOADING GAME8");
+                RoundManager.Instance.LoadNewLevel(seedFromServer, StartOfRound.Instance.currentLevel);
             });
             mls.LogInfo("Handled game start");
         }
