@@ -14,8 +14,9 @@ namespace LCDuels.Patches
     {
         [HarmonyPatch(nameof(StartMatchLever.PullLever))]
         [HarmonyPrefix]
-        static bool patchChooseNewRandomMapSeed(ref bool ___leverHasBeenPulled)
+        static bool patchChooseNewRandomMapSeed(StartMatchLever __instance)
         {
+            //LCDuelsModBase.Instance.mls.LogInfo("Pull lever called");
             if (LCDuelsModBase.playing)
             {
                 if (LCDuelsModBase.Instance.gameReady)
@@ -25,6 +26,8 @@ namespace LCDuels.Patches
                 else
                 {
                     _ = LCDuelsModBase.Instance.SendMessage(new { type = "ready" });
+                    LCDuelsModBase.Instance.matchLever = __instance;
+                    __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilGameIsReady());
                     return false;
                 }
             }

@@ -48,6 +48,7 @@ namespace LCDuels
         ClientWebSocket localWS = null;
 
         public Terminal terminal = null;
+        public StartMatchLever matchLever = null;
 
         public int getRandomMapID()
         {
@@ -89,7 +90,7 @@ namespace LCDuels
             harmony.PatchAll(typeof(HUDManagerPatch));
             harmony.PatchAll(typeof(StormyWeatherPatch));
             harmony.PatchAll(typeof(StartMatchLeverPatch));
-
+            harmony.PatchAll(typeof(RuntimeDungeonStartPatch));
         }
 
         public async Task InitWS()
@@ -139,6 +140,7 @@ namespace LCDuels
                     seedFromServer = int.Parse(data["seed"].ToString());
                     mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
                     System.Random lmfao = new System.Random(seedFromServer);
+                    //gameReady = true;
                     terminal.groupCredits = lmfao.Next(100, 1000);
                     StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
                     matchLever.triggerScript.disabledHoverTip = "[Pull to get ready]";
@@ -166,18 +168,11 @@ namespace LCDuels
                         "\n",
                         text
                     });
-                    //mls.LogInfo("Before task");
-                    //Task.Run(() => {
-                    //    mls.LogInfo("Inside task");
-                    //    StartCoroutine(updateTheScreen());
-                    //});
-                    //    mls.LogInfo("After task");
                     break;
 
                 case "game_start":
                     mls.LogInfo("Game started!");
                     gameReady = true;
-                    _ = HandleGameStart();
                     break;
 
                 case "position":
@@ -236,45 +231,6 @@ namespace LCDuels
             // Parse and handle the message as needed
         }
 
-        async Task HandleGameStart()
-        {
-            mls.LogInfo("Handling game start");
-            await Task.Run(async () =>
-            {
-                ////It get stuck somewhere here idk why pls help
-
-                //StartOfRound.Instance.StartGame();
-                //matchLever.playersManager.StartGame();
-                mls.LogInfo("LOADING GAME1");
-                StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
-                mls.LogInfo("LOADING GAME2");
-                GameNetworkManager.Instance.gameHasStarted = true;
-                mls.LogInfo("LOADING GAME3");
-                StartOfRound.Instance.inShipPhase = false;
-                mls.LogInfo("LOADING GAME4");
-                StartOfRound.Instance.fullyLoadedPlayers.Clear();
-                mls.LogInfo("LOADING GAME5");
-                matchLever.triggerScript.disabledHoverTip = "[Wait for ship to land]";
-                mls.LogInfo("LOADING GAME6");
-                StartOfRound.Instance.currentPlanetAnimator.SetTrigger("LandOnPlanet");
-                mls.LogInfo("LOADING GAME7" + StartOfRound.Instance.currentLevel.name);
-                StartOfRound.Instance.NetworkManager.SceneManager.LoadScene(StartOfRound.Instance.currentLevel.name, UnityEngine.SceneManagement.LoadSceneMode.Additive);
-                //mls.LogInfo("LOADING GAME8");
-                //RuntimeDungeon RD = UnityEngine.Object.FindFirstObjectByType<RuntimeDungeon>();
-                ////mls.LogInfo(UnityEngine.Object.FindFirstObjectByType<RuntimeDungeon>().ToString());
-                //if (!RD)
-                //{
-                //    mls.LogInfo("No RD");
-
-                //}
-                //RoundManager.Instance.GenerateNewLevelClientRpc(seedFromServer, StartOfRound.Instance.currentLevel.levelID);
-                await Task.Delay(500);
-                mls.LogInfo("LOADING GAME8");
-                RoundManager.Instance.LoadNewLevel(seedFromServer, StartOfRound.Instance.currentLevel);
-            });
-            mls.LogInfo("Handled game start");
-        }
-
         async Task Register(ClientWebSocket webSocket, string steamId, string steamUsername)
         {
             var message = new
@@ -292,6 +248,14 @@ namespace LCDuels
             byte[] bytes = Encoding.UTF8.GetBytes(jsonMessage);
             await localWS.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
             mls.LogInfo("Sent message");
+        }
+
+        public IEnumerator waitUntilGameIsReady()
+        {
+            mls.LogInfo("Waiting until game is ready");
+            yield return new WaitUntil(() => gameReady);
+            mls.LogInfo("Starting game");
+            matchLever.StartGame();
         }
     }
 }

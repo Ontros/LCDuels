@@ -117,6 +117,7 @@
   <ItemGroup>
     <Compile Include="Patches\HUDManagerPatch.cs" />
     <Compile Include="Patches\RoundManagerPatch.cs" />
+    <Compile Include="Patches\RuntimeDungeonStartPatch.cs" />
     <Compile Include="Patches\StartMatchLeverPatch.cs" />
     <Compile Include="Patches\StartOfRoundPatch.cs" />
     <Compile Include="Patches\PlayerControllerBPatch.cs" />
