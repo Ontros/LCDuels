@@ -12,41 +12,25 @@ namespace LCDuels.Patches
     [HarmonyPatch(typeof(HUDManager))]
     internal class HUDManagerPatch
     {
-        //[HarmonyPatch("SubmitChat_performed")]
-        //[HarmonyPrefix]
-        //static void patchSubmitChat_performed()
-        //{
-        //    Vector3 mainPos = RoundManager.FindMainEntrancePosition(false, false);
-        //    string[] outputs = new string[4];
-        //    EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>();
-        //    foreach (EntranceTeleport entranceTeleport in array)
-        //    {
-        //        if (!entranceTeleport.isEntranceToBuilding)
-        //        {
-        //            outputs[entranceTeleport.entranceId] = Vector3.Distance(mainPos, entranceTeleport.transform.position).ToString();
-        //        }
-        //    }
-        //    UnityEngine.Debug.Log(outputs[1]+ ","+ outputs[2] + "," + outputs[3]);
-        //}
         [HarmonyPatch("ChangeControlTip")]
         [HarmonyPrefix]
         static bool changeControlTipPatch()
         {
-            return false;
+            return !LCDuelsModBase.playing;
         }
 
         [HarmonyPatch("ChangeControlTipMultiple")]
         [HarmonyPrefix]
         static bool changeControlTipMultiplePatch()
         {
-            return false;
+            return !LCDuelsModBase.playing;
         }
 
         [HarmonyPatch("ClearControlTips")]
         [HarmonyPrefix]
         static bool clearControlTipPatch()
         {
-            return false;
+            return !LCDuelsModBase.playing;
         }
     }
 }

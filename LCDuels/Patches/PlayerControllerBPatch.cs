@@ -19,6 +19,7 @@ namespace LCDuels.Patches
         {
             if (LCDuelsModBase.playing)
             {
+                LCDuelsModBase.Instance.mls.LogInfo("Sending score "+RoundManager.Instance.scrapCollectedInLevel);
                 _ = LCDuelsModBase.Instance.SendMessage(new { type="score",value= RoundManager.Instance.scrapCollectedInLevel.ToString() });
             }
         }
@@ -39,21 +40,13 @@ namespace LCDuels.Patches
                     _ =LCDuelsModBase.Instance.SendMessage(new { type= "position", value= "1"});
                 }
             }
-            //GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
-            //float closestItem = 100000f;
-            //foreach (GrabbableObject grabbableObject in grabbableObjects)
-            //{
-            //    //UnityEngine.Debug.Log(grabbableObject.ToString()+grabbableObject.isInShipRoom);
-            //    if (!grabbableObject.isInFactory)
-            //    {
-            //        closestItem = Mathf.Min(closestItem, (Vector3.Distance(grabbableObject.transform.position, StartOfRound.Instance.allPlayerScripts[0].transform.position)));
-            //    }
-            //}
-            //UnityEngine.Debug.Log(closestItem.ToString());
-            //if (___currentlyHeldObjectServer != null)
-            //{
-            //    UnityEngine.Debug.Log(Vector3.Distance(___currentlyHeldObjectServer.transform.position, StartOfRound.Instance.allPlayerScripts[0].transform.position));
-            //}
+        }
+        [HarmonyPatch(nameof(PlayerControllerB.KillPlayer))]
+        [HarmonyPostfix]
+        static void patchKillPlayer()
+        {
+            LCDuelsModBase.Instance.mls.LogInfo("Sending death info");
+            _ = LCDuelsModBase.Instance.SendMessage(new { type = "death" });
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using BepInEx.Logging;
+using GameNetcodeStuff;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -16,23 +17,34 @@ namespace LCDuels.Patches
         [HarmonyPrefix]
         static bool patchChooseNewRandomMapSeed(StartMatchLever __instance)
         {
-            //LCDuelsModBase.Instance.mls.LogInfo("Pull lever called");
             if (LCDuelsModBase.playing)
             {
-                if (LCDuelsModBase.Instance.gameReady)
+                if (LCDuelsModBase.Instance.gameStarted)
                 {
+                    //Liftoff
+                    LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
+                    _ = LCDuelsModBase.Instance.SendMessage(new { value = "liftoff" });
+                    return true;
+                }
+                else if (LCDuelsModBase.Instance.gameReady)
+                {
+                    //Ready so start game
                     return true;
                 }
                 else
                 {
+                    //Get ready
+                    LCDuelsModBase.Instance.mls.LogInfo("Sending ready");
                     _ = LCDuelsModBase.Instance.SendMessage(new { type = "ready" });
                     LCDuelsModBase.Instance.matchLever = __instance;
                     __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilGameIsReady());
+                    __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilEndOfGame());
                     return false;
                 }
             }
             else
             {
+                //Just playing
                 return true;
             }
         }

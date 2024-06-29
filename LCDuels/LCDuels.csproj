@@ -40,6 +40,10 @@
     <Reference Include="BepInEx">
       <HintPath>C:\Users\Ontro\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\LCDuels\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
+    <Reference Include="Facepunch.Steamworks.Win64, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Facepunch.Steamworks.Win64.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -117,11 +121,12 @@
   <ItemGroup>
     <Compile Include="Patches\HUDManagerPatch.cs" />
     <Compile Include="Patches\RoundManagerPatch.cs" />
+    <Compile Include="Patches\GameNetworkManagerPatch.cs" />
     <Compile Include="Patches\RuntimeDungeonStartPatch.cs" />
     <Compile Include="Patches\StartMatchLeverPatch.cs" />
     <Compile Include="Patches\StartOfRoundPatch.cs" />
     <Compile Include="Patches\PlayerControllerBPatch.cs" />
-    <Compile Include="Patches\StormyWeatherPatch.cs" />
+    <Compile Include="Patches\MenuManagerPatch.cs" />
     <Compile Include="Patches\TerminalPatch.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

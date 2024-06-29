@@ -15,6 +15,8 @@ using UnityEngine.UI;
 using Newtonsoft.Json;
 using DunGen;
 using System.Collections;
+using System.Net.Http.Headers;
+using Steamworks;
 
 namespace LCDuels
 {
@@ -31,7 +33,7 @@ namespace LCDuels
 
         internal ManualLogSource mls;
         
-        public int seedFromServer;
+        public int seedFromServer = 64;
 
         public static TextMeshPro inGameStatusText;
 
@@ -39,7 +41,7 @@ namespace LCDuels
 
         public string enemyPlayerName = "Unknown";
 
-        public string enemyPlayerScrap = "Equal loot amount"; //0 same, 1 less, 2 more
+        public string enemyPlayerScrap = "= 0"; //0 same, 1 less, 2 more
 
         public string enemyPlayerLocation = "in ship"; //0 ship, 1 outisde, 2 inside 
 
@@ -49,27 +51,64 @@ namespace LCDuels
 
         ClientWebSocket localWS = null;
 
+        public bool wsTerminated = false;
+
         public Terminal terminal = null;
         public StartMatchLever matchLever = null;
 
+        public string endOfGameResult = "";
+
+        public int currentValue = 0;
+
+        public bool gameStarted = false;
+
+        public MenuManager menuManager = null;
+
+        public bool DisconnectDone =false;
+
+        public void ResetValues(bool isEnabled)
+        {
+            endOfGameResult = "";
+            seedFromServer = 64;
+            playing = isEnabled;
+            enemyPlayerName = "Unknown";
+            enemyPlayerScrap = "= 0";
+            enemyPlayerLocation = "in ship";
+            gameReady = false;
+            isInShip = true;
+            wsTerminated = false;
+            currentValue = 0;
+            gameStarted = false;
+        }
+
         public int getRandomMapID()
         {
+            int i = 0;
+            foreach (SelectableLevel selectableLevel in StartOfRound.Instance.levels)
+            {
+                mls.LogInfo(i.ToString() +"-"+ selectableLevel.PlanetName);
+                i++;
+            }
             System.Random ra = new System.Random(seedFromServer);
             int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
             if (output < 3)
             {
                 return output;
             }
-            else
+            else if (output < 10)
             {
                 return output + 1;
+            }
+            else
+            {
+                return output + 2;
             }
         }
 
         public void UpdateInGameStatusText()
         {
             HUDManager.Instance.controlTipLines[0].text = "VS: "+enemyPlayerName;
-            HUDManager.Instance.controlTipLines[1].text = "You have "+enemyPlayerScrap;
+            HUDManager.Instance.controlTipLines[1].text = "Enemy loot "+enemyPlayerScrap;
             HUDManager.Instance.controlTipLines[2].text = "He is "+enemyPlayerLocation;
         }
 
@@ -90,23 +129,31 @@ namespace LCDuels
             harmony.PatchAll(typeof(RoundManagerPatch));
             harmony.PatchAll(typeof(TerminalPatch));
             harmony.PatchAll(typeof(HUDManagerPatch));
-            harmony.PatchAll(typeof(StormyWeatherPatch));
             harmony.PatchAll(typeof(StartMatchLeverPatch));
             harmony.PatchAll(typeof(RuntimeDungeonStartPatch));
+            harmony.PatchAll(typeof(GameNetworkManagerPatch));
+            harmony.PatchAll(typeof(MenuManagerPatch));
         }
 
         public async Task InitWS()
         {
-            Uri serverUri = new Uri("ws://localhost:8080");
-            using (ClientWebSocket webSocket = new ClientWebSocket())
+            mls.LogInfo("InitWebSocket");
+            if (localWS == null) {
+                Uri serverUri = new Uri("ws://130.61.35.90:8080");
+                using (ClientWebSocket webSocket = new ClientWebSocket())
+                {
+                    localWS = webSocket;
+                    await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+                    mls.LogInfo("Connected to server");
+            
+                    _ = Register(localWS);
+                    // Start receiving messages
+                    await ReceiveMessages(webSocket);
+                }
+            }
+            else
             {
-                localWS = webSocket;
-                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-                mls.LogInfo("Connected to server");
-
-                _ = Register(webSocket, "yourSteamId", "yourSteamUsername");
-                // Start receiving messages
-                await ReceiveMessages(webSocket);
+                 _ = Register(localWS);
             }
         }
 
@@ -114,14 +161,34 @@ namespace LCDuels
         {
             byte[] buffer = new byte[1024];
 
-            while (webSocket.State == WebSocketState.Open)
+            try
             {
-                mls.LogInfo("Starting while loop");
-                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                HandleMessage(message);
+                while (webSocket.State == WebSocketState.Open)
+                {
+                    mls.LogInfo("Starting while loop");
+                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    HandleMessage(message);
+                }
             }
-            mls.LogInfo("Socket closed");
+            catch (WebSocketException ex)
+            {
+                Console.WriteLine($"WebSocketException: {ex.Message}");
+            }
+            finally
+            {
+                if (webSocket.State != WebSocketState.Closed)
+                {
+                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Error occurred", CancellationToken.None);
+                }
+                webSocket.Dispose();
+                mls.LogInfo("Socket closed");
+                localWS = null;
+                if (GameNetworkManager.Instance.isHostingGame && !wsTerminated)
+                {
+                    endOfGameResult = "Lost connection to server";
+                }
+            }
         }
 
         void HandleMessage(string message)
@@ -165,6 +232,7 @@ namespace LCDuels
                     {
                         "Pull the lever to get ready\nOrbiting: ",
                         StartOfRound.Instance.currentLevel.PlanetName,
+                        "\n",
                         text
                     });
                     break;
@@ -201,13 +269,13 @@ namespace LCDuels
                     switch (scoreComparasion)
                     {
                         case "0":
-                            enemyPlayerScrap = "equal loot amount";
+                            enemyPlayerScrap = "= "+currentValue;
                             break;
                         case "1":
-                            enemyPlayerScrap = "less loot";
+                            enemyPlayerScrap = "> "+currentValue;
                             break;
                         case "2":
-                            enemyPlayerScrap = "more loot";
+                            enemyPlayerScrap = "< "+currentValue;
                             break;
                         default:
                             enemyPlayerScrap = "data error";
@@ -220,6 +288,15 @@ namespace LCDuels
 
                 case "opponent_left":
                     mls.LogInfo("Your opponent has left the game.");
+                    endOfGameResult = "Won, opponent left";
+                    break;
+
+                case "won":
+                    endOfGameResult = "Won";
+                    break;
+
+                case "lost":
+                    endOfGameResult = "Lost";
                     break;
 
                 default:
@@ -227,16 +304,15 @@ namespace LCDuels
                     break;
             }
             mls.LogInfo("Received: " + message);
-            // Parse and handle the message as needed
         }
 
-        async Task Register(ClientWebSocket webSocket, string steamId, string steamUsername)
+        async Task Register(ClientWebSocket webSocket)
         {
             var message = new
             {
                 type = "register",
-                steamId,
-                steamUsername
+                steamId = SteamClient.SteamId.ToString(),
+                steamUsername = SteamClient.Name.ToString()
             };
             await SendMessage(message);
         }
@@ -255,6 +331,24 @@ namespace LCDuels
             yield return new WaitUntil(() => gameReady);
             mls.LogInfo("Starting game");
             matchLever.StartGame();
+            gameStarted = true;
+        }
+        
+        public IEnumerator waitUntilEndOfGame()
+        {
+            mls.LogInfo("Wait until end of game");
+            yield return new WaitUntil(()=>endOfGameResult!="");
+            mls.LogInfo("Ending game");
+            //GameNetworkManager.Instance.disconnectionReasonMessage = "Game ended\n"+endOfGameResult;
+            //if (StartOfRound.Instance != null)
+            //{
+            //    DisconnectDone = false;
+                GameNetworkManager.Instance.Disconnect();
+            //    yield return new WaitUntil(()=>DisconnectDone);
+            //}
+            //yield return new WaitForSeconds(1);
+            //mls.LogInfo("Displaying message");
+            //menuManager.SetLoadingScreen(false,RoomEnter.Error, "Game ended\n" + endOfGameResult);
         }
     }
 }
