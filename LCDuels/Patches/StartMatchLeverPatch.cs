@@ -19,10 +19,15 @@ namespace LCDuels.Patches
         {
             if (LCDuelsModBase.playing)
             {
-                if (LCDuelsModBase.Instance.gameStarted)
+                if (LCDuelsModBase.Instance.waitingForResult)
+                {
+                    return false;
+                }
+                else if (LCDuelsModBase.Instance.gameStarted)
                 {
                     //Liftoff
                     LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
+                    LCDuelsModBase.Instance.WaitingForResult();
                     _ = LCDuelsModBase.Instance.SendMessage(new { value = "liftoff" });
                     return true;
                 }

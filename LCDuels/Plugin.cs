@@ -41,7 +41,7 @@ namespace LCDuels
 
         public string enemyPlayerName = "Unknown";
 
-        public string enemyPlayerScrap = "= 0"; //0 same, 1 less, 2 more
+        public string enemyPlayerScrap = "0"; //0 same, 1 less, 2 more
 
         public string enemyPlayerLocation = "in ship"; //0 ship, 1 outisde, 2 inside 
 
@@ -49,12 +49,7 @@ namespace LCDuels
 
         public bool isInShip = true;
 
-        ClientWebSocket localWS = null;
-
         public bool wsTerminated = false;
-
-        public Terminal terminal = null;
-        public StartMatchLever matchLever = null;
 
         public string endOfGameResult = "";
 
@@ -62,9 +57,16 @@ namespace LCDuels
 
         public bool gameStarted = false;
 
-        public MenuManager menuManager = null;
+        public bool DisconnectDone = false;
 
-        public bool DisconnectDone =false;
+        public bool waitingForResult = false;
+
+        public bool death = false;
+
+        ClientWebSocket localWS = null;
+        public Terminal terminal = null;
+        public StartMatchLever matchLever = null;
+        public MenuManager menuManager = null;
 
         public void ResetValues(bool isEnabled)
         {
@@ -72,13 +74,15 @@ namespace LCDuels
             seedFromServer = 64;
             playing = isEnabled;
             enemyPlayerName = "Unknown";
-            enemyPlayerScrap = "= 0";
+            enemyPlayerScrap = "0";
             enemyPlayerLocation = "in ship";
             gameReady = false;
             isInShip = true;
             wsTerminated = false;
             currentValue = 0;
             gameStarted = false;
+            waitingForResult = false;
+            death = false;  
         }
 
         public int getRandomMapID()
@@ -108,8 +112,8 @@ namespace LCDuels
         public void UpdateInGameStatusText()
         {
             HUDManager.Instance.controlTipLines[0].text = "VS: "+enemyPlayerName;
-            HUDManager.Instance.controlTipLines[1].text = "Enemy loot "+enemyPlayerScrap;
-            HUDManager.Instance.controlTipLines[2].text = "He is "+enemyPlayerLocation;
+            HUDManager.Instance.controlTipLines[1].text = "Your loot "+currentValue;
+            HUDManager.Instance.controlTipLines[2].text = "Enemy loot "+enemyPlayerScrap;
         }
 
         void Awake()
@@ -212,7 +216,7 @@ namespace LCDuels
                     //gameReady = true;
                     terminal.groupCredits = lmfao.Next(100, 1000);
                     StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
-                    matchLever.triggerScript.disabledHoverTip = "[Pull to get ready]";
+                    matchLever.triggerScript.hoverTip = "[Pull to get ready]";
                     matchLever.triggerScript.interactable = true;
                     StartOfRound.Instance.randomMapSeed = seedFromServer;
                     StartOfRound.Instance.ChangeLevel(getRandomMapID());
@@ -265,23 +269,7 @@ namespace LCDuels
                     break;
 
                 case "score":
-                    string scoreComparasion = data["value"].ToString();
-                    switch (scoreComparasion)
-                    {
-                        case "0":
-                            enemyPlayerScrap = "= "+currentValue;
-                            break;
-                        case "1":
-                            enemyPlayerScrap = "> "+currentValue;
-                            break;
-                        case "2":
-                            enemyPlayerScrap = "< "+currentValue;
-                            break;
-                        default:
-                            enemyPlayerScrap = "data error";
-                            break;
-
-                    }
+                    enemyPlayerScrap = data["value"].ToString();
                     mls.LogInfo($"Opponent score is {enemyPlayerScrap}");
                     UpdateInGameStatusText();
                     break;
@@ -355,6 +343,14 @@ namespace LCDuels
                 steamUsername = SteamClient.Name.ToString()
             };
             await SendMessage(message);
+        }
+
+        public void WaitingForResult()
+        {
+            waitingForResult = true;
+            matchLever.triggerScript.disabledHoverTip = "[ Waiting for end of game ]";
+            matchLever.triggerScript.interactable = false;
+            StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player to die or get more then you or lift off";
         }
 
         public async Task SendMessage(object message)

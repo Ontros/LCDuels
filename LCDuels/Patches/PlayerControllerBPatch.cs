@@ -14,11 +14,12 @@ namespace LCDuels.Patches
     internal class PlayerControllerBPatch
     {
         [HarmonyPatch(nameof(PlayerControllerB.SetItemInElevator))]
-        [HarmonyPrefix]
+        [HarmonyPostfix]
         static void patchSetItemInElevatorPatch()
         {
             if (LCDuelsModBase.playing)
             {
+                LCDuelsModBase.Instance.currentValue = RoundManager.Instance.scrapCollectedInLevel;
                 LCDuelsModBase.Instance.mls.LogInfo("Sending score "+RoundManager.Instance.scrapCollectedInLevel);
                 _ = LCDuelsModBase.Instance.SendMessage(new { type="score",value= RoundManager.Instance.scrapCollectedInLevel.ToString() });
             }
@@ -46,6 +47,8 @@ namespace LCDuels.Patches
         static void patchKillPlayer()
         {
             LCDuelsModBase.Instance.mls.LogInfo("Sending death info");
+            LCDuelsModBase.Instance.death = true;
+            LCDuelsModBase.Instance.WaitingForResult();
             _ = LCDuelsModBase.Instance.SendMessage(new { type = "death" });
         }
     }
