@@ -40,7 +40,8 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.Instance.endOfGameResult!="")
             {
                 LCDuelsModBase.Instance.mls.LogInfo("Setting reason for leaving game");
-                __instance.SetLoadingScreen(false,RoomEnter.Error, "Game ended\n" + LCDuelsModBase.Instance.endOfGameResult);
+                __instance.SetLoadingScreen(false,RoomEnter.Error, LCDuelsModBase.Instance.endOfGameResult);
+                LCDuelsModBase.Instance.endOfGameResult = "";
             }
         }
 

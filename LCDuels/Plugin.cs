@@ -292,11 +292,51 @@ namespace LCDuels
                     break;
 
                 case "won":
-                    endOfGameResult = "Won";
+                    switch (data["value"])
+                    {
+                        case '1':
+                            endOfGameResult = "Won, because other player died";
+                            break;
+                        case "3":
+                            endOfGameResult = "Won, becase you had more loot";
+                            break;
+                        case "5":
+                            endOfGameResult = "Won, becase you had the same amount of loot but you were faster";
+                            break;
+                        case "7":
+                            endOfGameResult = "Won, becase other player had no balls";
+                            break;
+                        case "9":
+                            endOfGameResult = "Won, becase you had the same amount of loot but you survived longer";
+                            break;
+                        default:
+                            endOfGameResult = "Won, reason unknown";
+                            break;
+                    }
                     break;
 
                 case "lost":
-                    endOfGameResult = "Lost";
+                    switch (data["value"])
+                    {
+                        case '2':
+                            endOfGameResult = "Lost, because other player survived";
+                            break;
+                        case "4":
+                            endOfGameResult = "Lost, becase you had less loot";
+                            break;
+                        case "6":
+                            endOfGameResult = "Lost, becase you had the same amount of loot but you were slower";
+                            break;
+                        case "8":
+                            endOfGameResult = "Lost, becase you had no balls";
+                            break;
+                        case "10":
+                            endOfGameResult = "Lost, becase you had the same amount of loot but you died sooner";
+                            break;
+                        default:
+                            endOfGameResult = "Lost, reason unknown";
+                            break;
+                    }
                     break;
 
                 default:
@@ -339,16 +379,7 @@ namespace LCDuels
             mls.LogInfo("Wait until end of game");
             yield return new WaitUntil(()=>endOfGameResult!="");
             mls.LogInfo("Ending game");
-            //GameNetworkManager.Instance.disconnectionReasonMessage = "Game ended\n"+endOfGameResult;
-            //if (StartOfRound.Instance != null)
-            //{
-            //    DisconnectDone = false;
-                GameNetworkManager.Instance.Disconnect();
-            //    yield return new WaitUntil(()=>DisconnectDone);
-            //}
-            //yield return new WaitForSeconds(1);
-            //mls.LogInfo("Displaying message");
-            //menuManager.SetLoadingScreen(false,RoomEnter.Error, "Game ended\n" + endOfGameResult);
+            GameNetworkManager.Instance.Disconnect();
         }
     }
 }
