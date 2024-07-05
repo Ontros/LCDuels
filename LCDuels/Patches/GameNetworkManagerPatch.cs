@@ -35,5 +35,15 @@ namespace LCDuels.Patches
         {
             LCDuelsModBase.Instance.DisconnectDone = true;
         }
+
+        [HarmonyPatch(nameof(GameNetworkManager.Disconnect))]
+        [HarmonyPrefix]
+        static void PatchDisconnect()
+        {
+            if (LCDuelsModBase.playing)
+            {
+                _ = LCDuelsModBase.Instance.SendMessage(new { type = "leave" });
+            }
+        }
     }
 }

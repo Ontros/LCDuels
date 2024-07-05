@@ -39,5 +39,12 @@ namespace LCDuels.Patches
         {
              LCDuelsModBase.Instance.mls.LogInfo("startgame finished");
         }
+
+        [HarmonyPatch("PlayFirstDayShipAnimation")]
+        [HarmonyPrefix]
+        static bool patchPlayFirstDayShipAnimation()
+        {
+            return !LCDuelsModBase.playing;
+        }
     }
 }

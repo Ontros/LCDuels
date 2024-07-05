@@ -113,7 +113,7 @@ namespace LCDuels
         {
             HUDManager.Instance.controlTipLines[0].text = "VS: "+enemyPlayerName;
             HUDManager.Instance.controlTipLines[1].text = "Your loot "+currentValue;
-            HUDManager.Instance.controlTipLines[2].text = "Enemy loot "+enemyPlayerScrap;
+            HUDManager.Instance.controlTipLines[2].text = "He is " + enemyPlayerLocation;
         }
 
         void Awake()
@@ -137,6 +137,8 @@ namespace LCDuels
             harmony.PatchAll(typeof(RuntimeDungeonStartPatch));
             harmony.PatchAll(typeof(GameNetworkManagerPatch));
             harmony.PatchAll(typeof(MenuManagerPatch));
+            harmony.PatchAll(typeof(EntranceTeleportPatch));
+            harmony.PatchAll(typeof(ItemDropShipPatch));
         }
 
         public async Task InitWS()
@@ -251,7 +253,7 @@ namespace LCDuels
                     switch (position)
                     {
                         case "0":
-                            enemyPlayerLocation = "in ship";
+                            enemyPlayerLocation = "outside";
                             break;
                         case "1":
                             enemyPlayerLocation = "outside";
@@ -326,6 +328,9 @@ namespace LCDuels
                             break;
                     }
                     break;
+                case "in_game_error":
+                    HUDManager.Instance.SetDebugText("Something has gone wrong, please restart the game");
+                    break;
 
                 default:
                     mls.LogInfo($"Unknown message type: {messageType}");
@@ -342,6 +347,7 @@ namespace LCDuels
                 steamId = SteamClient.SteamId.ToString(),
                 steamUsername = SteamClient.Name.ToString()
             };
+            mls.LogInfo("Registering with username: " + message.steamUsername);
             await SendMessage(message);
         }
 

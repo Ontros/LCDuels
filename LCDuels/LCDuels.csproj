@@ -122,11 +122,13 @@
     <Compile Include="Patches\HUDManagerPatch.cs" />
     <Compile Include="Patches\RoundManagerPatch.cs" />
     <Compile Include="Patches\GameNetworkManagerPatch.cs" />
+    <Compile Include="Patches\ItemDropshipPatch.cs" />
     <Compile Include="Patches\RuntimeDungeonStartPatch.cs" />
     <Compile Include="Patches\StartMatchLeverPatch.cs" />
     <Compile Include="Patches\StartOfRoundPatch.cs" />
     <Compile Include="Patches\PlayerControllerBPatch.cs" />
     <Compile Include="Patches\MenuManagerPatch.cs" />
+    <Compile Include="Patches\EntranceTeleportPatch.cs" />
     <Compile Include="Patches\TerminalPatch.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

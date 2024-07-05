@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace LCDuels.Patches
@@ -19,7 +20,7 @@ namespace LCDuels.Patches
             LCDuelsModBase.Instance.mls.LogInfo("Is LCDuels enabled: "+LCDuelsModBase.playing);
             if (LCDuelsModBase.playing)
             {
-                __instance.groupCredits = 0;
+                __instance.groupCredits = 2147483647;
                 LCDuelsModBase.Instance.terminal = __instance;
                 StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player";
                 StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
@@ -27,7 +28,34 @@ namespace LCDuels.Patches
                 matchLever.triggerScript.interactable = false;
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
                 Task.Run(LCDuelsModBase.Instance.InitWS);
+                StartOfRound.Instance.DisableShipSpeaker();
             }
         }
+
+        [HarmonyPatch(nameof(Terminal.SyncGroupCreditsClientRpc))]
+        [HarmonyPostfix]
+        static void patchSyncBoughItemsWithServer(Terminal __instance)
+        {
+            if (LCDuelsModBase.playing)
+            {
+                foreach (int itemToDeliver in __instance.orderedItemsFromTerminal)
+                {
+                    LCDuelsModBase.Instance.mls.LogInfo("Spawing item"+itemToDeliver);
+                    GameObject go = UnityEngine.Object.Instantiate(__instance.buyableItemsList[itemToDeliver].spawnPrefab, GameNetworkManager.Instance.localPlayerController.transform.position,Quaternion.identity,StartOfRound.Instance.propsContainer);
+                    GrabbableObject grabbableObject = go.GetComponent<GrabbableObject>();
+                    if (grabbableObject != null)
+                    {
+                        grabbableObject.itemProperties.canBeGrabbedBeforeGameStart = true;
+                        grabbableObject.isInElevator = true;
+                        grabbableObject.isInShipRoom = true;
+                        grabbableObject.fallTime = 0;
+                        StartOfRound.Instance.currentShipItemCount++;
+                        go.GetComponent<NetworkObject>().Spawn(false);
+                    }
+                }
+                __instance.orderedItemsFromTerminal.Clear();
+            }
+        }
+
     }
 }

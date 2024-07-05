@@ -22,6 +22,7 @@ namespace LCDuels.Patches
                 LCDuelsModBase.Instance.currentValue = RoundManager.Instance.scrapCollectedInLevel;
                 LCDuelsModBase.Instance.mls.LogInfo("Sending score "+RoundManager.Instance.scrapCollectedInLevel);
                 _ = LCDuelsModBase.Instance.SendMessage(new { type="score",value= RoundManager.Instance.scrapCollectedInLevel.ToString() });
+                LCDuelsModBase.Instance.UpdateInGameStatusText();
             }
         }
         //[HarmonyPatch(nameof(PlayerControllerB.Update))] if public member
