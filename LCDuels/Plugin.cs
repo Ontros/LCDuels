@@ -215,8 +215,12 @@ namespace LCDuels
                     seedFromServer = int.Parse(data["seed"].ToString());
                     mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
                     System.Random lmfao = new System.Random(seedFromServer);
-                    //gameReady = true;
-                    terminal.groupCredits = lmfao.Next(100, 1000);
+                    int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 700, 700, 700, 1000, 1000 };
+                    terminal.groupCredits = startingCash[lmfao.Next(0,startingCash.Length)];
+                    if (lmfao.Next(0,10000) == 6942)
+                    {
+                        terminal.groupCredits = int.MaxValue;
+                    }
                     StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
                     matchLever.triggerScript.hoverTip = "[Pull to get ready]";
                     matchLever.triggerScript.interactable = true;
@@ -284,7 +288,7 @@ namespace LCDuels
                 case "won":
                     switch (data["value"])
                     {
-                        case '1':
+                        case "1":
                             endOfGameResult = "Won, because other player died";
                             break;
                         case "3":
@@ -308,7 +312,7 @@ namespace LCDuels
                 case "lost":
                     switch (data["value"])
                     {
-                        case '2':
+                        case "2":
                             endOfGameResult = "Lost, because other player survived";
                             break;
                         case "4":
