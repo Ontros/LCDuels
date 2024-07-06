@@ -39,7 +39,7 @@ namespace LCDuels
 
         public static bool playing = true;
 
-        public string enemyPlayerName = "Unknown";
+        public string enemyPlayerName = "Waiting";
 
         public string enemyPlayerScrap = "0"; //0 same, 1 less, 2 more
 
@@ -257,7 +257,7 @@ namespace LCDuels
                     switch (position)
                     {
                         case "0":
-                            enemyPlayerLocation = "outside";
+                            enemyPlayerLocation = waitingForResult?"in ship":"outside";
                             break;
                         case "1":
                             enemyPlayerLocation = "outside";
@@ -272,12 +272,20 @@ namespace LCDuels
                     }
                     mls.LogInfo($"Opponent position: {enemyPlayerLocation}");
                     UpdateInGameStatusText();
+                    if (waitingForResult)
+                    {
+                        UpdateDisplayWaitingForResult();
+                    }
                     break;
 
                 case "score":
                     enemyPlayerScrap = data["value"].ToString();
                     mls.LogInfo($"Opponent score is {enemyPlayerScrap}");
                     UpdateInGameStatusText();
+                    if (waitingForResult)
+                    {
+                        UpdateDisplayWaitingForResult();
+                    }
                     break;
 
                 case "opponent_left":
@@ -343,6 +351,11 @@ namespace LCDuels
             mls.LogInfo("Received: " + message);
         }
 
+        public void UpdateDisplayWaitingForResult()
+        {
+            StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player to die or get more then you or lift off\nEnemy loot: "+enemyPlayerScrap+"\nHe is: "+enemyPlayerLocation;
+        }
+
         async Task Register(ClientWebSocket webSocket)
         {
             var message = new
@@ -360,7 +373,7 @@ namespace LCDuels
             waitingForResult = true;
             matchLever.triggerScript.disabledHoverTip = "[ Waiting for end of game ]";
             matchLever.triggerScript.interactable = false;
-            StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player to die or get more then you or lift off";
+            UpdateDisplayWaitingForResult();
         }
 
         public async Task SendMessage(object message)
@@ -385,6 +398,7 @@ namespace LCDuels
             mls.LogInfo("Wait until end of game");
             yield return new WaitUntil(()=>endOfGameResult!="");
             mls.LogInfo("Ending game");
+            yield return new WaitForSeconds(3);
             GameNetworkManager.Instance.Disconnect();
         }
     }
