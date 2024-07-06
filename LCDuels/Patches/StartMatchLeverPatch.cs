@@ -26,9 +26,6 @@ namespace LCDuels.Patches
                 else if (LCDuelsModBase.Instance.gameStarted)
                 {
                     //Liftoff
-                    LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
-                    LCDuelsModBase.Instance.WaitingForResult();
-                    _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff" });
                     return true;
                 }
                 else if (LCDuelsModBase.Instance.gameReady)

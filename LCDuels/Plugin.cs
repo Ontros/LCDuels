@@ -111,7 +111,7 @@ namespace LCDuels
 
         public void UpdateInGameStatusText()
         {
-            HUDManager.Instance.controlTipLines[0].text = "Our dc: dc.ontro.cz";
+            HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
             HUDManager.Instance.controlTipLines[1].text = "VS: "+enemyPlayerName;
             HUDManager.Instance.controlTipLines[2].text = "Your loot "+currentValue;
             HUDManager.Instance.controlTipLines[3].text = "He is " + enemyPlayerLocation;
