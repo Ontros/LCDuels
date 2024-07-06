@@ -43,7 +43,6 @@ namespace LCDuels.Patches
                     _ = LCDuelsModBase.Instance.SendMessage(new { type = "ready" });
                     LCDuelsModBase.Instance.matchLever = __instance;
                     __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilGameIsReady());
-                    __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilEndOfGame());
                     return false;
                 }
             }

@@ -28,6 +28,7 @@ namespace LCDuels.Patches
                 matchLever.triggerScript.interactable = false;
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
                 Task.Run(LCDuelsModBase.Instance.InitWS);
+                __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilEndOfGame());
                 StartOfRound.Instance.DisableShipSpeaker();
             }
         }
@@ -43,14 +44,17 @@ namespace LCDuels.Patches
                     LCDuelsModBase.Instance.mls.LogInfo("Spawing item"+itemToDeliver);
                     GameObject go = UnityEngine.Object.Instantiate(__instance.buyableItemsList[itemToDeliver].spawnPrefab, GameNetworkManager.Instance.localPlayerController.transform.position,Quaternion.identity,StartOfRound.Instance.propsContainer);
                     GrabbableObject grabbableObject = go.GetComponent<GrabbableObject>();
+                    
                     if (grabbableObject != null)
                     {
+                        go.GetComponent<NetworkObject>().Spawn(false);
                         grabbableObject.itemProperties.canBeGrabbedBeforeGameStart = true;
                         grabbableObject.isInElevator = true;
                         grabbableObject.isInShipRoom = true;
                         grabbableObject.fallTime = 0;
+                        grabbableObject.parentObject = null;
+                        grabbableObject.transform.SetParent(StartOfRound.Instance.elevatorTransform, true);
                         StartOfRound.Instance.currentShipItemCount++;
-                        go.GetComponent<NetworkObject>().Spawn(false);
                     }
                 }
                 __instance.orderedItemsFromTerminal.Clear();
