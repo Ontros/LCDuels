@@ -22,6 +22,7 @@ namespace LCDuels.Patches
             {
                 __instance.groupCredits = 0;
                 GameNetworkManager.Instance.SetLobbyJoinable(false);
+                GameNetworkManager.Instance.disallowConnection = true;
                 LCDuelsModBase.Instance.terminal = __instance;
                 StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player";
                 StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
@@ -31,10 +32,6 @@ namespace LCDuels.Patches
                 Task.Run(LCDuelsModBase.Instance.InitWS);
                 __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilEndOfGame());
                 StartOfRound.Instance.DisableShipSpeaker();
-            }
-            else
-            {
-                GameNetworkManager.Instance.SetLobbyJoinable(true);
             }
         }
 

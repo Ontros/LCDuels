@@ -25,7 +25,7 @@ namespace LCDuels
     {
         private const string modGUID = "onty.duels";
         private const string modName = "LCDuels";
-        private const string modVersion = "0.1.0.0";
+        private const string modVersion = "1.0.0.1";
 
         private readonly Harmony harmony = new Harmony(modGUID);
 
@@ -111,9 +111,10 @@ namespace LCDuels
 
         public void UpdateInGameStatusText()
         {
-            HUDManager.Instance.controlTipLines[0].text = "VS: "+enemyPlayerName;
-            HUDManager.Instance.controlTipLines[1].text = "Your loot "+currentValue;
-            HUDManager.Instance.controlTipLines[2].text = "He is " + enemyPlayerLocation;
+            HUDManager.Instance.controlTipLines[0].text = "Our dc: dc.ontro.cz";
+            HUDManager.Instance.controlTipLines[1].text = "VS: "+enemyPlayerName;
+            HUDManager.Instance.controlTipLines[2].text = "Your loot "+currentValue;
+            HUDManager.Instance.controlTipLines[3].text = "He is " + enemyPlayerLocation;
         }
 
         void Awake()
@@ -245,6 +246,7 @@ namespace LCDuels
                         "\n",
                         text
                     });
+                    HUDManager.Instance.SetDebugText("Match found, Pull the lever to get ready");
                     break;
 
                 case "game_start":

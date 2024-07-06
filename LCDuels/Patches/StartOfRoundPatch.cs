@@ -31,13 +31,13 @@ namespace LCDuels.Patches
         [HarmonyPrefix]
         static void patchtest1()
         {
-             LCDuelsModBase.Instance.mls.LogInfo("startgame called");
+            LCDuelsModBase.Instance.mls.LogInfo("startgame called");
         }
         [HarmonyPatch(nameof(StartOfRound.StartGame))]
         [HarmonyPostfix]
         static void patchtest2()
         {
-             LCDuelsModBase.Instance.mls.LogInfo("startgame finished");
+            LCDuelsModBase.Instance.mls.LogInfo("startgame finished");
         }
 
         [HarmonyPatch("PlayFirstDayShipAnimation")]
@@ -45,6 +45,15 @@ namespace LCDuels.Patches
         static bool patchPlayFirstDayShipAnimation()
         {
             return !LCDuelsModBase.playing;
+        }
+
+        [HarmonyPatch(nameof(StartOfRound.ShipHasLeft))]
+        [HarmonyPrefix]
+        static void patchShipHasLeft()
+        {
+            LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
+            LCDuelsModBase.Instance.WaitingForResult();
+            _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff" });
         }
     }
 }
