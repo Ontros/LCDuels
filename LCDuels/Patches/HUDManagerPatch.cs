@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace LCDuels.Patches
 {
@@ -43,6 +44,17 @@ namespace LCDuels.Patches
                 {
                     return true;
                 }
+                HUDManager hu = HUDManager.Instance;
+                if (!string.IsNullOrEmpty(hu.chatTextField.text) && hu.chatTextField.text.Length < 50)
+                {
+                    hu.AddTextToChatOnServer(hu.chatTextField.text, (int)hu.localPlayer.playerClientId);
+                }
+                hu.localPlayer.isTypingChat = false;
+                hu.chatTextField.text = "";
+                EventSystem.current.SetSelectedGameObject(null);
+                hu.PingHUDElement(hu.Chat, 2f, 1f, 0.2f);
+                hu.typingIndicator.enabled = false;
+                _ = LCDuelsModBase.Instance.SendMessage(new {type="chat", value=hu.chatTextField.text.ToString()});
                 return false;
             }
             return true;

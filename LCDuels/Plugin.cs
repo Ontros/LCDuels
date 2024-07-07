@@ -17,6 +17,7 @@ using DunGen;
 using System.Collections;
 using System.Net.Http.Headers;
 using Steamworks;
+using System.Reflection;
 
 namespace LCDuels
 {
@@ -217,8 +218,8 @@ namespace LCDuels
                     mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
                     System.Random lmfao = new System.Random(seedFromServer);
                     int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 700, 700, 700, 1000, 1000 };
-                    terminal.groupCredits = startingCash[lmfao.Next(0,startingCash.Length)];
-                    if (lmfao.Next(0,10000) == 6942)
+                    terminal.groupCredits = startingCash[lmfao.Next(0, startingCash.Length)];
+                    if (lmfao.Next(0, 10000) == 6942)
                     {
                         terminal.groupCredits = int.MaxValue;
                     }
@@ -259,7 +260,7 @@ namespace LCDuels
                     switch (position)
                     {
                         case "0":
-                            enemyPlayerLocation = waitingForResult?"in ship":"outside";
+                            enemyPlayerLocation = waitingForResult ? "in ship" : "outside";
                             break;
                         case "1":
                             enemyPlayerLocation = "outside";
@@ -344,6 +345,13 @@ namespace LCDuels
                     break;
                 case "in_game_error":
                     HUDManager.Instance.SetDebugText("Something has gone wrong, please restart the game");
+                    break;
+                case "chat":
+                    //HUDManager.Instance.AddTextToChatOnServer();
+                    var targetMethod = typeof(HUDManager).GetMethod("AddChatMessage", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                    targetMethod.Invoke(HUDManager.Instance, new object[] { data["value"], enemyPlayerName });
+                    HUDManager.Instance.PingHUDElement(HUDManager.Instance.Chat, 2f, 1f, 0.2f);
                     break;
 
                 default:
