@@ -32,5 +32,20 @@ namespace LCDuels.Patches
         {
             return !LCDuelsModBase.playing;
         }
+
+        [HarmonyPatch("SubmitChat_performed")]
+        [HarmonyPrefix]
+        static bool submitChatPatch() 
+        {
+            if (LCDuelsModBase.playing)
+            {
+                if (GameNetworkManager.Instance.localPlayerController == null || !GameNetworkManager.Instance.localPlayerController.isTypingChat)
+                {
+                    return true;
+                }
+                return false;
+            }
+            return true;
+        }
     }
 }
