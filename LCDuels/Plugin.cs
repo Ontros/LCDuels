@@ -64,10 +64,16 @@ namespace LCDuels
 
         public bool death = false;
 
+        public string versionString = "";
+
         ClientWebSocket localWS = null;
         public Terminal terminal = null;
         public StartMatchLever matchLever = null;
         public MenuManager menuManager = null;
+
+        public TextMeshProUGUI publicText;
+        public TextMeshProUGUI friendsText;
+        public TextMeshProUGUI serverName;
 
         public void ResetValues(bool isEnabled)
         {
@@ -88,12 +94,6 @@ namespace LCDuels
 
         public int getRandomMapID()
         {
-            int i = 0;
-            foreach (SelectableLevel selectableLevel in StartOfRound.Instance.levels)
-            {
-                mls.LogInfo(i.ToString() +"-"+ selectableLevel.PlanetName);
-                i++;
-            }
             System.Random ra = new System.Random(seedFromServer);
             int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
             if (output < 3)
@@ -291,6 +291,10 @@ namespace LCDuels
                     }
                     break;
 
+                case "error":
+                    endOfGameResult = data["value"].ToString();
+                    break;
+
                 case "opponent_left":
                     mls.LogInfo("Your opponent has left the game.");
                     endOfGameResult = "Won, opponent left";
@@ -372,7 +376,8 @@ namespace LCDuels
             {
                 type = "register",
                 steamId = SteamClient.SteamId.ToString(),
-                steamUsername = SteamClient.Name.ToString()
+                steamUsername = SteamClient.Name.ToString(),
+                version = versionString
             };
             mls.LogInfo("Registering with username: " + message.steamUsername);
             await SendMessage(message);

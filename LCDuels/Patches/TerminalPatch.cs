@@ -17,6 +17,10 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchStart(Terminal __instance)
         {
+            for (float i = 0f; i<0.001f;i+=0.0001f)
+            {
+                LCDuelsModBase.Instance.mls.LogInfo(i.ToString()+TimeOfDay.Instance.quotaVariables.randomizerCurve.Evaluate(i).ToString());
+            }
             LCDuelsModBase.Instance.mls.LogInfo("Is LCDuels enabled: "+LCDuelsModBase.playing);
             if (LCDuelsModBase.playing)
             {

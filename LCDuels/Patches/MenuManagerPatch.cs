@@ -15,22 +15,50 @@ namespace LCDuels.Patches
     [HarmonyPatch(typeof(MenuManager))]
     internal class MenuManagerPatch
     {
+        static Button LCDbuttonbutton;
         [HarmonyPatch("OnEnable")]
         [HarmonyPostfix]
         static void patchOnEnable(MenuManager __instance)
         {
-            Button hostButton = Traverse.Create(__instance).Field("startHostButton").GetValue() as Button;
-            LCDuelsModBase.Instance.mls.LogInfo(hostButton.ToString());
-            LCDuelsModBase.Instance.menuManager = __instance;
-            GameObject LCDButton = UnityEngine.Object.Instantiate(hostButton.gameObject);
-            LCDButton.transform.SetParent(hostButton.transform.parent.GetComponent<RectTransform>(),false);
-            LCDButton.transform.localPosition = hostButton.transform.localPosition + (hostButton.transform.localPosition - __instance.joinCrewButtonContainer.transform.localPosition);
-            LCDButton.transform.localRotation = hostButton.transform.localRotation;
-            LCDButton.transform.localScale = hostButton.transform.localScale;
-            LCDButton.GetComponentInChildren<TextMeshProUGUI>().text = "> Play LC Duels";
-            Button LCDbuttonbutton = LCDButton.GetComponent<Button>();
-            LCDbuttonbutton.onClick.RemoveAllListeners();
-            LCDbuttonbutton.onClick.AddListener(new UnityEngine.Events.UnityAction(OnHostLCDuels));
+            foreach (TextMeshProUGUI textMeshProUGUI in __instance.HostSettingsOptionsNormal.GetComponentsInChildren<TextMeshProUGUI>())
+            {
+                Debug.Log(textMeshProUGUI.name + "="+textMeshProUGUI.text);
+            }
+            PrintChildren(__instance.HostSettingsOptionsNormal);
+            if (!GameNetworkManager.Instance.disableSteam)
+            {
+                if (LCDbuttonbutton ==  null)
+                {
+                    foreach (TextMeshProUGUI publicButton in __instance.HostSettingsOptionsNormal.GetComponentsInChildren<TextMeshProUGUI>())
+                    {
+                        if (publicButton.text == "Public")
+                        {
+                            LCDuelsModBase.Instance.publicText = publicButton;
+                        }
+                        else if (publicButton.text == "Friends-only")
+                        {
+                            LCDuelsModBase.Instance.friendsText = publicButton;
+                        }
+                        else if (publicButton.text == "Server name:")
+                        {
+                            LCDuelsModBase.Instance.serverName = publicButton;
+                        }
+                    }
+                    LCDuelsModBase.Instance.versionString = __instance.versionNumberText.text;
+                    Button hostButton = Traverse.Create(__instance).Field("startHostButton").GetValue() as Button;
+                    LCDuelsModBase.Instance.mls.LogInfo(hostButton.ToString());
+                    LCDuelsModBase.Instance.menuManager = __instance;
+                    GameObject LCDButton = UnityEngine.Object.Instantiate(hostButton.gameObject);
+                    LCDButton.transform.SetParent(hostButton.transform.parent.GetComponent<RectTransform>(),false);
+                    LCDButton.transform.localPosition = hostButton.transform.localPosition + (hostButton.transform.localPosition - __instance.joinCrewButtonContainer.transform.localPosition);
+                    LCDButton.transform.localRotation = hostButton.transform.localRotation;
+                    LCDButton.transform.localScale = hostButton.transform.localScale;
+                    LCDButton.GetComponentInChildren<TextMeshProUGUI>().text = "> Play LC Duels";
+                    LCDbuttonbutton = LCDButton.GetComponent<Button>();
+                    LCDbuttonbutton.onClick.RemoveAllListeners();
+                    LCDbuttonbutton.onClick.AddListener(new UnityEngine.Events.UnityAction(OnPlayLCDuelsMenuOpen));
+                }
+            }
         }
 
         [HarmonyPatch("Start")]
@@ -49,7 +77,56 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchClickHostButton()
         {
-            LCDuelsModBase.Instance.ResetValues(false);
+            LCDuelsModBase.playing = false;
+            ResetHostMenuValues();
+        }
+
+        [HarmonyPatch(nameof(MenuManager.ConfirmHostButton))]
+        [HarmonyPrefix]
+        static bool patchConfirm()
+        {
+            if (LCDuelsModBase.playing)
+            {
+                OnHostLCDuels();
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        static void ResetHostMenuValues()
+        {
+            LCDuelsModBase.Instance.publicText.text = "Public";
+            LCDuelsModBase.Instance.friendsText.text = "Friends-only";
+            LCDuelsModBase.Instance.serverName.text = "Server name:";
+        }
+
+        [HarmonyPatch(nameof(MenuManager.PlayCancelSFX))]
+        [HarmonyPrefix]
+        static void patchPlayCancelSFX()
+        {
+            //LCDuelsModBase.Instance.mls.LogInfo("Setting playing to false, clicked cancel");
+            //LCDuelsModBase.playing = false;
+        }
+
+        [HarmonyPatch(nameof(MenuManager.HostSetLobbyPublic))]
+        [HarmonyPostfix]
+        static void patchHostSetLobbyPublic(bool setPublic)
+        {
+            if (LCDuelsModBase.playing)
+            {
+                if (setPublic)
+                {
+                    LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For public queue you have to follow the rules and play on the current version";
+                    LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text = "";
+                }
+                else
+                {
+                    LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For private queue select the same queue name as the players you want to queue up with and make sure you have matching mods and version";
+                }
+            }
         }
 
         public static void OnHostLCDuels()
@@ -58,6 +135,60 @@ namespace LCDuels.Patches
             LCDuelsModBase.Instance.ResetValues(true);
             GameNetworkManager.Instance.lobbyHostSettings = new HostSettings("LCDuels game", false);
             GameNetworkManager.Instance.StartHost();
+        }
+
+        public static void OnPlayLCDuelsMenuOpen()
+        {
+            LCDuelsModBase.Instance.menuManager.EnableLeaderboardDisplay(false);
+            LCDuelsModBase.Instance.menuManager.HostSettingsScreen.SetActive(true);
+            LCDuelsModBase.playing = true;
+            LCDuelsModBase.Instance.publicText.text = "Public Queue";
+            LCDuelsModBase.Instance.friendsText.text = "Private Queue";
+            LCDuelsModBase.Instance.serverName.text = "Queue name:";
+
+            string defaultValue;
+            if (GameNetworkManager.Instance.disableSteam)
+            {
+                defaultValue = "Unnamed";
+            }
+            else if (!SteamClient.IsLoggedOn)
+            {
+                LCDuelsModBase.Instance.menuManager.DisplayMenuNotification("Could not connect to Steam servers! (If you just want to play on your local network, choose LAN on launch.)", "Continue");
+                defaultValue = "Unnamed";
+            }
+            else
+            {
+                defaultValue = SteamClient.Name.ToString() + "'s Crew";
+            }
+            LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text = "";
+            LCDuelsModBase.Instance.menuManager.HostSetLobbyPublic(true);
+        }
+
+        public static void PrintChildren(GameObject parent)
+        {
+            // Check if the parent has children
+            if (parent.transform.childCount == 0)
+            {
+                Component[] components = parent.GetComponents<Component>();
+
+                // Print each component's type
+                Debug.Log("Leaf Node: " + parent.name);
+                foreach (Component component in components)
+                {
+                    Debug.Log("Component: " + component.GetType());
+                }
+                return;
+            }
+
+            // Iterate through each child of the parent GameObject
+            foreach (Transform child in parent.transform)
+            {
+                // Print the child's name and type
+                Debug.Log("Name: " + child.gameObject.name + ", Type: " + child.gameObject.GetType());
+
+                // Recursively print information for the child's children
+                PrintChildren(child.gameObject);
+            }
         }
     }
 }
