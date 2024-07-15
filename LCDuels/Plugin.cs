@@ -217,7 +217,7 @@ namespace LCDuels
                     seedFromServer = int.Parse(data["seed"].ToString());
                     mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
                     System.Random lmfao = new System.Random(seedFromServer);
-                    int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 700, 700, 700, 1000, 1000 };
+                    int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
                     terminal.groupCredits = startingCash[lmfao.Next(0, startingCash.Length)];
                     if (lmfao.Next(0, 10000) == 6942)
                     {
@@ -351,7 +351,6 @@ namespace LCDuels
                     HUDManager.Instance.SetDebugText("Something has gone wrong, please restart the game");
                     break;
                 case "chat":
-                    //HUDManager.Instance.AddTextToChatOnServer();
                     var targetMethod = typeof(HUDManager).GetMethod("AddChatMessage", BindingFlags.NonPublic | BindingFlags.Instance);
 
                     targetMethod.Invoke(HUDManager.Instance, new object[] { data["value"], enemyPlayerName });
@@ -377,7 +376,8 @@ namespace LCDuels
                 type = "register",
                 steamId = SteamClient.SteamId.ToString(),
                 steamUsername = SteamClient.Name.ToString(),
-                version = versionString
+                version = versionString,
+                queueName = menuManager.lobbyNameInputField
             };
             mls.LogInfo("Registering with username: " + message.steamUsername);
             await SendMessage(message);
@@ -415,6 +415,19 @@ namespace LCDuels
             mls.LogInfo("Ending game");
             yield return new WaitForSeconds(3);
             GameNetworkManager.Instance.Disconnect();
+        }
+
+        public void preventSaveLoading()
+        {
+            LCDuelsModBase.Instance.mls.LogInfo("Preventing loading a save");
+            GameNetworkManager.Instance.currentSaveFileName = "PleaseDontCheatThx";
+            GameNetworkManager.Instance.saveFileNum = 69;
+        }
+        public void allowSaveLoading()
+        {
+            LCDuelsModBase.Instance.mls.LogInfo("Preventing loading a save");
+            GameNetworkManager.Instance.currentSaveFileName = "LCSaveFile1";
+            GameNetworkManager.Instance.saveFileNum = 1;
         }
     }
 }

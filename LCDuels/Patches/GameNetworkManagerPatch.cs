@@ -45,5 +45,14 @@ namespace LCDuels.Patches
                 _ = LCDuelsModBase.Instance.SendMessage(new { type = "leave" });
             }
         }
+
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        static void PatchStart(GameNetworkManager __instance) {
+            if (LCDuelsModBase.playing)
+            {
+                LCDuelsModBase.Instance.preventSaveLoading();
+            }
+        }
     }
 }

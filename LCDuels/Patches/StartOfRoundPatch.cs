@@ -51,9 +51,12 @@ namespace LCDuels.Patches
         [HarmonyPrefix]
         static void patchShipHasLeft()
         {
-            LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
-            LCDuelsModBase.Instance.WaitingForResult();
-            _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff" });
+            if (LCDuelsModBase.playing)
+            {
+                LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
+                LCDuelsModBase.Instance.WaitingForResult();
+                _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff" });
+            }
         }
     }
 }

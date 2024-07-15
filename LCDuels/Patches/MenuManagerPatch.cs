@@ -78,6 +78,7 @@ namespace LCDuels.Patches
         static void patchClickHostButton()
         {
             LCDuelsModBase.playing = false;
+            LCDuelsModBase.Instance.allowSaveLoading();
             ResetHostMenuValues();
         }
 
@@ -121,10 +122,12 @@ namespace LCDuels.Patches
                 {
                     LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For public queue you have to follow the rules and play on the current version";
                     LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text = "";
+                    LCDuelsModBase.Instance.menuManager.lobbyNameInputField.enabled = false;
                 }
                 else
                 {
                     LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For private queue select the same queue name as the players you want to queue up with and make sure you have matching mods and version";
+                    LCDuelsModBase.Instance.menuManager.lobbyNameInputField.enabled = true;
                 }
             }
         }
@@ -133,6 +136,7 @@ namespace LCDuels.Patches
         {
             LCDuelsModBase.Instance.mls.LogInfo("OnHostClicked");
             LCDuelsModBase.Instance.ResetValues(true);
+            LCDuelsModBase.Instance.preventSaveLoading();
             GameNetworkManager.Instance.lobbyHostSettings = new HostSettings("LCDuels game", false);
             GameNetworkManager.Instance.StartHost();
         }
