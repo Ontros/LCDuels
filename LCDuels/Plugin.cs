@@ -66,6 +66,8 @@ namespace LCDuels
 
         public string versionString = "";
 
+        public bool gameEndedWithError = false;
+
         ClientWebSocket localWS = null;
         public Terminal terminal = null;
         public StartMatchLever matchLever = null;
@@ -90,6 +92,7 @@ namespace LCDuels
             gameStarted = false;
             waitingForResult = false;
             death = false;  
+            gameEndedWithError = false;
         }
 
         public int getRandomMapID()
@@ -194,6 +197,7 @@ namespace LCDuels
                 localWS = null;
                 if (GameNetworkManager.Instance.isHostingGame && !wsTerminated)
                 {
+                    gameEndedWithError = true;
                     endOfGameResult = "Lost connection to server";
                 }
             }
@@ -292,6 +296,7 @@ namespace LCDuels
                     break;
 
                 case "error":
+                    gameEndedWithError = true;
                     endOfGameResult = data["value"].ToString();
                     break;
 
@@ -348,7 +353,8 @@ namespace LCDuels
                     }
                     break;
                 case "in_game_error":
-                    HUDManager.Instance.SetDebugText("Something has gone wrong, please restart the game");
+                    gameEndedWithError = true;
+                    endOfGameResult = "Something went wrong, please restart the game!";
                     break;
                 case "chat":
                     var targetMethod = typeof(HUDManager).GetMethod("AddChatMessage", BindingFlags.NonPublic | BindingFlags.Instance);

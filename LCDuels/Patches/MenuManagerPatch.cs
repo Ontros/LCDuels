@@ -68,7 +68,8 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.Instance.endOfGameResult!="")
             {
                 LCDuelsModBase.Instance.mls.LogInfo("Setting reason for leaving game");
-                __instance.SetLoadingScreen(false,RoomEnter.Error, LCDuelsModBase.Instance.endOfGameResult+"\nLoot values:\n"+LCDuelsModBase.Instance.currentValue+" vs "+LCDuelsModBase.Instance.enemyPlayerScrap);
+                __instance.SetLoadingScreen(false, RoomEnter.Error, LCDuelsModBase.Instance.endOfGameResult + (!LCDuelsModBase.Instance.gameEndedWithError ? 
+                    ("\nLoot values:\n" + LCDuelsModBase.Instance.currentValue + " vs " + LCDuelsModBase.Instance.enemyPlayerScrap) :""));
                 LCDuelsModBase.Instance.endOfGameResult = "";
             }
         }
