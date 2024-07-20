@@ -20,11 +20,6 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchOnEnable(MenuManager __instance)
         {
-            foreach (TextMeshProUGUI textMeshProUGUI in __instance.HostSettingsOptionsNormal.GetComponentsInChildren<TextMeshProUGUI>())
-            {
-                Debug.Log(textMeshProUGUI.name + "="+textMeshProUGUI.text);
-            }
-            PrintChildren(__instance.HostSettingsOptionsNormal);
             if (!GameNetworkManager.Instance.disableSteam)
             {
                 if (LCDbuttonbutton ==  null)
@@ -46,7 +41,6 @@ namespace LCDuels.Patches
                     }
                     LCDuelsModBase.Instance.versionString = __instance.versionNumberText.text;
                     Button hostButton = Traverse.Create(__instance).Field("startHostButton").GetValue() as Button;
-                    LCDuelsModBase.Instance.mls.LogInfo(hostButton.ToString());
                     LCDuelsModBase.Instance.menuManager = __instance;
                     GameObject LCDButton = UnityEngine.Object.Instantiate(hostButton.gameObject);
                     LCDButton.transform.SetParent(hostButton.transform.parent.GetComponent<RectTransform>(),false);

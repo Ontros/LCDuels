@@ -3,7 +3,9 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LCDuels.Patches
@@ -43,6 +45,16 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.playing)
             {
                 _ = LCDuelsModBase.Instance.SendMessage(new { type = "leave" });
+            }
+        }
+        [HarmonyPatch(nameof(GameNetworkManager.Disconnect))]
+        [HarmonyPostfix]
+        static void PatchDisconnectPost()
+        {
+            if (LCDuelsModBase.playing)
+            {
+                LCDuelsModBase.Instance.wsTerminated = true;
+                _ = LCDuelsModBase.Instance.localWS.CloseAsync(WebSocketCloseStatus.NormalClosure,"Closing the connection normally", CancellationToken.None);
             }
         }
 

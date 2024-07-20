@@ -69,10 +69,11 @@ namespace LCDuels
         public bool gameEndedWithError = false;
 
         public string queueName = "";
+        public static bool debug = false;
 
         public bool isPublicQueue = false;
 
-        ClientWebSocket localWS = null;
+        public ClientWebSocket localWS = null;
         public Terminal terminal = null;
         public StartMatchLever matchLever = null;
         public MenuManager menuManager = null;
@@ -161,9 +162,8 @@ namespace LCDuels
                     await webSocket.ConnectAsync(serverUri, CancellationToken.None);
                     mls.LogInfo("Connected to server");
             
-                    _ = Register(localWS);
                     // Start receiving messages
-                    await ReceiveMessages(webSocket);
+                    await ReceiveMessages(webSocket, true);
                 }
             }
             else
@@ -172,7 +172,7 @@ namespace LCDuels
             }
         }
 
-        async Task ReceiveMessages(ClientWebSocket webSocket)
+        async Task ReceiveMessages(ClientWebSocket webSocket, bool shouldRegister)
         {
             byte[] buffer = new byte[1024];
 
@@ -181,6 +181,12 @@ namespace LCDuels
                 while (webSocket.State == WebSocketState.Open)
                 {
                     mls.LogInfo("Starting while loop");
+                    if (shouldRegister)
+                    {
+                        mls.LogInfo("Registering");
+                        shouldRegister = false;
+                        _ = Register(localWS);
+                    }
                     var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     HandleMessage(message);
@@ -281,7 +287,10 @@ namespace LCDuels
                             break;
 
                     }
-                    mls.LogInfo($"Opponent position: {enemyPlayerLocation}");
+                    if (debug)
+                    {
+                        mls.LogInfo($"Opponent position: {enemyPlayerLocation}");
+                    }
                     UpdateInGameStatusText();
                     if (waitingForResult)
                     {
@@ -291,7 +300,10 @@ namespace LCDuels
 
                 case "score":
                     enemyPlayerScrap = data["value"].ToString();
-                    mls.LogInfo($"Opponent score is {enemyPlayerScrap}");
+                    if (debug)
+                    {
+                        mls.LogInfo($"Opponent score is {enemyPlayerScrap}");
+                    }
                     UpdateInGameStatusText();
                     if (waitingForResult)
                     {
@@ -368,10 +380,24 @@ namespace LCDuels
                     break;
 
                 default:
-                    mls.LogInfo($"Unknown message type: {messageType}");
+                    if (debug)
+                    {
+                        mls.LogInfo($"Unknown message type: {messageType}");
+                    }
+                    else
+                    {
+                        mls.LogInfo("Unknown message received");
+                    }
                     break;
             }
-            mls.LogInfo("Received: " + message);
+            if (debug)
+            {
+                mls.LogInfo("Received: " + message);
+            }
+            else
+            {
+                mls.LogInfo("Received message");
+            }
         }
 
         public void UpdateDisplayWaitingForResult()
@@ -381,6 +407,7 @@ namespace LCDuels
 
         async Task Register(ClientWebSocket webSocket)
         {
+            mls.LogInfo(versionString+"version");
             if (string.IsNullOrEmpty(menuManager.lobbyNameInputField.text)) {
                 queueName = "";
             }
@@ -389,7 +416,8 @@ namespace LCDuels
                 type = "register",
                 steamId = SteamClient.SteamId.ToString(),
                 steamUsername = SteamClient.Name.ToString(),
-                queueName                //version = versionString,
+                queueName,                
+                version = versionString,
             };
             mls.LogInfo("Registering with username: " + message.steamUsername + "-"+queueName);
             await SendMessage(message);
