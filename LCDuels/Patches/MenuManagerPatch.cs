@@ -73,20 +73,47 @@ namespace LCDuels.Patches
                 LCDuelsModBase.Instance.endOfGameResult = "";
             }
         }
+        [HarmonyPatch("Update")]
+        [HarmonyPostfix]
+        static void patchOnUpdate(MenuManager __instance)
+        {
+            if (LCDuelsModBase.playing)
+            {
+                __instance.lobbyTagInputField.gameObject.SetActive(false);
+            }
+        }
 
         [HarmonyPatch(nameof(MenuManager.ClickHostButton))]
-        [HarmonyPostfix]
+        [HarmonyPrefix]
         static void patchClickHostButton()
         {
             LCDuelsModBase.playing = false;
             LCDuelsModBase.Instance.allowSaveLoading();
+            //DeleteFileButton saveFileUISlot = UnityEngine.Object.FindFirstObjectByType<DeleteFileButton>();
+            //Debug.Log(saveFileUISlot);
+            //if (saveFileUISlot != null )
+            //{
+            //    Component[] components = saveFileUISlot.transform.parent.transform.parent.transform.parent.GetComponents<Component>();
+
+            //    foreach (Component component in components)
+            //    {
+            //        Debug.Log("ComponentXD: " + component.GetType());
+            //    }
+            //}
+            //else
+            //{
+            //    Debug.Log("no save file UI slot");
+            //}
             ResetHostMenuValues();
+            TextMeshProUGUI placeholderText = LCDuelsModBase.Instance.menuManager.lobbyNameInputField.GetComponentInChildren<TextMeshProUGUI>();
+            placeholderText.text = "Name your server...";
         }
 
         [HarmonyPatch(nameof(MenuManager.ConfirmHostButton))]
         [HarmonyPrefix]
         static bool patchConfirm()
         {
+            LCDuelsModBase.Instance.queueName = LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text;
             if (LCDuelsModBase.playing)
             {
                 OnHostLCDuels();
@@ -105,41 +132,45 @@ namespace LCDuels.Patches
             LCDuelsModBase.Instance.serverName.text = "Server name:";
         }
 
-        [HarmonyPatch(nameof(MenuManager.PlayCancelSFX))]
-        [HarmonyPrefix]
-        static void patchPlayCancelSFX()
-        {
-            //LCDuelsModBase.Instance.mls.LogInfo("Setting playing to false, clicked cancel");
-            //LCDuelsModBase.playing = false;
-        }
-
         [HarmonyPatch(nameof(MenuManager.HostSetLobbyPublic))]
         [HarmonyPostfix]
         static void patchHostSetLobbyPublic(bool setPublic)
         {
             if (LCDuelsModBase.playing)
             {
+                LCDuelsModBase.Instance.isPublicQueue = setPublic;
                 if (setPublic)
                 {
                     LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For public queue you have to follow the rules and play on the current version";
                     LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text = "";
                     LCDuelsModBase.Instance.menuManager.lobbyNameInputField.enabled = false;
+                    TextMeshProUGUI placeholderText = LCDuelsModBase.Instance.menuManager.lobbyNameInputField.GetComponentInChildren<TextMeshProUGUI>();
+                    placeholderText.text = "Leave empty";
                 }
                 else
                 {
                     LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For private queue select the same queue name as the players you want to queue up with and make sure you have matching mods and version";
                     LCDuelsModBase.Instance.menuManager.lobbyNameInputField.enabled = true;
+                    TextMeshProUGUI placeholderText = LCDuelsModBase.Instance.menuManager.lobbyNameInputField.GetComponentInChildren<TextMeshProUGUI>();
+                    placeholderText.text = "Name your queue...";
                 }
             }
         }
 
         public static void OnHostLCDuels()
         {
-            LCDuelsModBase.Instance.mls.LogInfo("OnHostClicked");
-            LCDuelsModBase.Instance.ResetValues(true);
-            LCDuelsModBase.Instance.preventSaveLoading();
-            GameNetworkManager.Instance.lobbyHostSettings = new HostSettings("LCDuels game", false);
-            GameNetworkManager.Instance.StartHost();
+            if (!LCDuelsModBase.Instance.isPublicQueue &&  LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text == "")
+            {
+                LCDuelsModBase.Instance.menuManager.SetLoadingScreen(false, RoomEnter.Error, "Please enter private queue name");
+            }
+            else
+            {
+                LCDuelsModBase.Instance.mls.LogInfo("OnHostClicked");
+                LCDuelsModBase.Instance.ResetValues(true);
+                LCDuelsModBase.Instance.preventSaveLoading();
+                GameNetworkManager.Instance.lobbyHostSettings = new HostSettings("LCDuels game", false);
+                GameNetworkManager.Instance.StartHost();
+            }
         }
 
         public static void OnPlayLCDuelsMenuOpen()

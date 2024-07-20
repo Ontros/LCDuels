@@ -26,7 +26,7 @@ namespace LCDuels
     {
         private const string modGUID = "onty.duels";
         private const string modName = "LCDuels";
-        private const string modVersion = "1.0.0.1";
+        private const string modVersion = "1.1.0.0";
 
         private readonly Harmony harmony = new Harmony(modGUID);
 
@@ -67,6 +67,10 @@ namespace LCDuels
         public string versionString = "";
 
         public bool gameEndedWithError = false;
+
+        public string queueName = "";
+
+        public bool isPublicQueue = false;
 
         ClientWebSocket localWS = null;
         public Terminal terminal = null;
@@ -116,9 +120,9 @@ namespace LCDuels
         public void UpdateInGameStatusText()
         {
             HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
-            HUDManager.Instance.controlTipLines[1].text = "VS: "+enemyPlayerName;
-            HUDManager.Instance.controlTipLines[2].text = "Your loot "+currentValue;
-            HUDManager.Instance.controlTipLines[3].text = "He is " + enemyPlayerLocation;
+            HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
+            HUDManager.Instance.controlTipLines[2].text = "VS: "+enemyPlayerName;
+            HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
         }
 
         void Awake()
@@ -251,7 +255,7 @@ namespace LCDuels
                         "\n",
                         text
                     });
-                    HUDManager.Instance.SetDebugText("Match found, Pull the lever to get ready");
+                    HUDManager.Instance.DisplayTip("Match found","Pull the lever to get ready");
                     break;
 
                 case "game_start":
@@ -312,16 +316,16 @@ namespace LCDuels
                             endOfGameResult = "Won, because other player died";
                             break;
                         case "3":
-                            endOfGameResult = "Won, becase you had more loot";
+                            endOfGameResult = "Won, because you had more loot";
                             break;
                         case "5":
-                            endOfGameResult = "Won, becase you had the same amount of loot but you were faster";
+                            endOfGameResult = "Won, because you had the same amount of loot but you were faster";
                             break;
                         case "7":
-                            endOfGameResult = "Won, becase other player had no balls";
+                            endOfGameResult = "Won, because other player had no balls";
                             break;
                         case "9":
-                            endOfGameResult = "Won, becase you had the same amount of loot but you survived longer";
+                            endOfGameResult = "Won, because you had the same amount of loot but you survived longer";
                             break;
                         default:
                             endOfGameResult = "Won, reason unknown";
@@ -336,16 +340,16 @@ namespace LCDuels
                             endOfGameResult = "Lost, because other player survived";
                             break;
                         case "4":
-                            endOfGameResult = "Lost, becase you had less loot";
+                            endOfGameResult = "Lost, because you had less loot";
                             break;
                         case "6":
-                            endOfGameResult = "Lost, becase you had the same amount of loot but you were slower";
+                            endOfGameResult = "Lost, because you had the same amount of loot but you were slower";
                             break;
                         case "8":
-                            endOfGameResult = "Lost, becase you had no balls";
+                            endOfGameResult = "Lost, because you had no balls";
                             break;
                         case "10":
-                            endOfGameResult = "Lost, becase you had the same amount of loot but you died sooner";
+                            endOfGameResult = "Lost, because you had the same amount of loot but you died sooner";
                             break;
                         default:
                             endOfGameResult = "Lost, reason unknown";
@@ -377,15 +381,17 @@ namespace LCDuels
 
         async Task Register(ClientWebSocket webSocket)
         {
+            if (string.IsNullOrEmpty(menuManager.lobbyNameInputField.text)) {
+                queueName = "";
+            }
             var message = new
             {
                 type = "register",
                 steamId = SteamClient.SteamId.ToString(),
                 steamUsername = SteamClient.Name.ToString(),
-                version = versionString,
-                queueName = menuManager.lobbyNameInputField
+                queueName                //version = versionString,
             };
-            mls.LogInfo("Registering with username: " + message.steamUsername);
+            mls.LogInfo("Registering with username: " + message.steamUsername + "-"+queueName);
             await SendMessage(message);
         }
 
