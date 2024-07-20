@@ -49,12 +49,12 @@ namespace LCDuels.Patches
                 {
                     hu.AddTextToChatOnServer(hu.chatTextField.text, (int)hu.localPlayer.playerClientId);
                 }
+                _ = LCDuelsModBase.Instance.SendMessage(new {type="chat", value=hu.chatTextField.text});
                 hu.localPlayer.isTypingChat = false;
                 hu.chatTextField.text = "";
                 EventSystem.current.SetSelectedGameObject(null);
                 hu.PingHUDElement(hu.Chat, 2f, 1f, 0.2f);
                 hu.typingIndicator.enabled = false;
-                _ = LCDuelsModBase.Instance.SendMessage(new {type="chat", value=hu.chatTextField.text.ToString()});
                 return false;
             }
             return true;
