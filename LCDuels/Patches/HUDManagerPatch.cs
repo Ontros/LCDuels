@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.EventSystems;
 
 namespace LCDuels.Patches
@@ -38,6 +39,10 @@ namespace LCDuels.Patches
         [HarmonyPrefix]
         static bool submitChatPatch() 
         {
+            if (HUDManager.Instance.chatTextField.text == "f")
+            {
+                LCDuelsModBase.PathfindToTerminal();
+            }
             if (LCDuelsModBase.playing)
             {
                 if (GameNetworkManager.Instance.localPlayerController == null || !GameNetworkManager.Instance.localPlayerController.isTypingChat)

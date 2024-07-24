@@ -18,6 +18,7 @@ using System.Collections;
 using System.Net.Http.Headers;
 using Steamworks;
 using System.Reflection;
+using UnityEngine.AI;
 
 namespace LCDuels
 {
@@ -468,6 +469,34 @@ namespace LCDuels
             LCDuelsModBase.Instance.mls.LogInfo("Preventing loading a save");
             GameNetworkManager.Instance.currentSaveFileName = "LCSaveFile1";
             GameNetworkManager.Instance.saveFileNum = 1;
+        }
+        public static void PathfindToTerminal()
+        {
+            NavMeshAgent agent = GameNetworkManager.Instance.localPlayerController.GetComponent<NavMeshAgent>();
+            Debug.Log("1");
+            GameNetworkManager.Instance.localPlayerController.thisController.enabled = false;
+            Debug.Log("2");
+            if (agent == null)
+            {
+                agent = GameNetworkManager.Instance.localPlayerController.gameObject.AddComponent<NavMeshAgent>();
+            }
+            agent.speed = GameNetworkManager.Instance.localPlayerController.movementSpeed * 2.25f;
+            Debug.Log("3");
+            agent.acceleration = 8f;
+            Debug.Log("4");
+            agent.angularSpeed = 120f;
+            Debug.Log("5");
+            agent.stoppingDistance = 0.5f;
+            Debug.Log("6");
+            agent.SetDestination(getRandomNodePosition());
+        }
+        
+        public static Vector3 getRandomNodePosition()
+        {
+            GameObject[] allAINodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
+            System.Random random = new System.Random();
+            return allAINodes[random.Next(allAINodes.Length)].transform.position;
+
         }
     }
 }

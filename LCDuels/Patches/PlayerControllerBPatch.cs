@@ -1,5 +1,6 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
+using UnityEngine.AI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,6 +14,12 @@ namespace LCDuels.Patches
     [HarmonyPatch(typeof(PlayerControllerB))]
     internal class PlayerControllerBPatch
     {
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        static void Postfix(PlayerControllerB __instance)
+        {
+        }
+
         [HarmonyPatch(nameof(PlayerControllerB.SetItemInElevator))]
         [HarmonyPostfix]
         static void patchSetItemInElevatorPatch()
