@@ -19,6 +19,7 @@ using System.Net.Http.Headers;
 using Steamworks;
 using System.Reflection;
 using UnityEngine.AI;
+using static UnityEngine.GraphicsBuffer;
 
 namespace LCDuels
 {
@@ -66,6 +67,10 @@ namespace LCDuels
         public bool death = false;
 
         public string versionString = "";
+
+        public GrabbableObject targettedGO = null;
+
+        public NavMeshAgent agent = null;
 
         public bool gameEndedWithError = false;
 
@@ -470,9 +475,9 @@ namespace LCDuels
             GameNetworkManager.Instance.currentSaveFileName = "LCSaveFile1";
             GameNetworkManager.Instance.saveFileNum = 1;
         }
-        public static void PathfindToTerminal()
+        public IEnumerator StartLooting()
         {
-            NavMeshAgent agent = GameNetworkManager.Instance.localPlayerController.GetComponent<NavMeshAgent>();
+            agent = GameNetworkManager.Instance.localPlayerController.GetComponent<NavMeshAgent>();
             Debug.Log("1");
             GameNetworkManager.Instance.localPlayerController.thisController.enabled = false;
             Debug.Log("2");
@@ -482,21 +487,57 @@ namespace LCDuels
             }
             agent.speed = GameNetworkManager.Instance.localPlayerController.movementSpeed * 2.25f;
             Debug.Log("3");
-            agent.acceleration = 8f;
+            agent.acceleration = 20f;
             Debug.Log("4");
-            agent.angularSpeed = 120f;
+            agent.angularSpeed = 360f;
             Debug.Log("5");
             agent.stoppingDistance = 0.5f;
             Debug.Log("6");
-            agent.SetDestination(getRandomNodePosition());
+            EntranceTeleport entranceTeleport = getEnteranceTeleport();
+            agent.SetDestination(entranceTeleport.transform.position);
+            yield return new WaitUntil(()=>Vector3.Distance(entranceTeleport.transform.position,GameNetworkManager.Instance.localPlayerController.transform.position)<5f);
+            Debug.Log("7");
+            agent.SetDestination(GameNetworkManager.Instance.localPlayerController.transform.position);
+            entranceTeleport.TeleportPlayer();
+            agent.Warp(entranceTeleport.exitPoint.transform.position);
+            agent.updateRotation =false;
+            Debug.Log("8");
+            GrabbableObject[] grabbableObjects = GameObject.FindObjectsOfType<GrabbableObject>();
+            grabbableObjects = grabbableObjects.OrderBy(o => Vector3.Distance(entranceTeleport.exitPoint.transform.position,o.transform.position)).ToArray();
+            foreach(GrabbableObject grabbableObject in grabbableObjects)
+            {
+            Debug.Log("9");
+                if (grabbableObject.isInFactory)
+                {
+                    targettedGO = grabbableObject;
+                    agent.SetDestination(grabbableObject.transform.position);
+                    yield return new WaitUntil(()=>Vector3.Distance(grabbableObject.transform.position,GameNetworkManager.Instance.localPlayerController.transform.position)<1f);
+                    //GameNetworkManager.Instance.localPlayerController.Begi
+                    yield return new WaitForSeconds(5);
+                }
+            }
+            agent.SetDestination(entranceTeleport.exitPoint.transform.position);
         }
         
-        public static Vector3 getRandomNodePosition()
+        public Vector3 getRandomNodePosition()
         {
             GameObject[] allAINodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
             System.Random random = new System.Random();
             return allAINodes[random.Next(allAINodes.Length)].transform.position;
 
+        }
+
+        public EntranceTeleport getEnteranceTeleport()
+        {
+            EntranceTeleport[] teleports = GameObject.FindObjectsOfType<EntranceTeleport>();
+            foreach (EntranceTeleport teleport in teleports)
+            {
+                if (teleport.isEntranceToBuilding)
+                {
+                    return teleport;
+                }
+            }
+            return teleports[0];
         }
     }
 }

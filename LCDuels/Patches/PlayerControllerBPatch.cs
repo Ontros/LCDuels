@@ -14,10 +14,17 @@ namespace LCDuels.Patches
     [HarmonyPatch(typeof(PlayerControllerB))]
     internal class PlayerControllerBPatch
     {
-        [HarmonyPatch("Start")]
+        [HarmonyPatch("Update")]
         [HarmonyPostfix]
         static void Postfix(PlayerControllerB __instance)
         {
+            if (LCDuelsModBase.Instance.targettedGO != null)
+            {
+                Vector3 direction = (LCDuelsModBase.Instance.targettedGO.transform.position - LCDuelsModBase.Instance.agent.transform.position).normalized;
+                Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, direction.y, direction.z));
+                LCDuelsModBase.Instance.agent.transform.rotation = lookRotation;
+                GameNetworkManager.Instance.localPlayerController.gameplayCamera.transform.rotation = lookRotation;
+            }
         }
 
         [HarmonyPatch(nameof(PlayerControllerB.SetItemInElevator))]

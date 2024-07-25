@@ -41,7 +41,7 @@ namespace LCDuels.Patches
         {
             if (HUDManager.Instance.chatTextField.text == "f")
             {
-                LCDuelsModBase.PathfindToTerminal();
+                GameNetworkManager.Instance.localPlayerController.StartCoroutine(LCDuelsModBase.Instance.StartLooting());
             }
             if (LCDuelsModBase.playing)
             {
