@@ -20,6 +20,7 @@ using Steamworks;
 using System.Reflection;
 using UnityEngine.AI;
 using static UnityEngine.GraphicsBuffer;
+using System.Security.Cryptography;
 
 namespace LCDuels
 {
@@ -500,31 +501,109 @@ namespace LCDuels
             agent.SetDestination(GameNetworkManager.Instance.localPlayerController.transform.position);
             entranceTeleport.TeleportPlayer();
             agent.Warp(entranceTeleport.exitPoint.transform.position);
-            agent.updateRotation =false;
+            agent.updateRotation =true;
             Debug.Log("8");
-            GrabbableObject[] grabbableObjects = GameObject.FindObjectsOfType<GrabbableObject>();
-            grabbableObjects = grabbableObjects.OrderBy(o => Vector3.Distance(entranceTeleport.exitPoint.transform.position,o.transform.position)).ToArray();
+            //GrabbableObject[] grabbableObjects = GameObject.FindObjectsOfType<GrabbableObject>();
+            //grabbableObjects = grabbableObjects.OrderBy(o => Vector3.Distance(entranceTeleport.exitPoint.transform.position,o.transform.position)).ToArray();
+            MethodInfo method = GameNetworkManager.Instance.localPlayerController.GetType().GetMethod("BeginGrabObject", BindingFlags.NonPublic | BindingFlags.Instance);
+            GrabbableObject[] grabbableObjects = get4Items(entranceTeleport.exitPoint.transform.position);
             foreach(GrabbableObject grabbableObject in grabbableObjects)
             {
-            Debug.Log("9");
-                if (grabbableObject.isInFactory)
+                Debug.Log("9");
+                if (grabbableObject.isInFactory && grabbableObject.scrapValue > 3)
                 {
-                    targettedGO = grabbableObject;
+                    targettedGO = null;
+                    agent.enabled = true;
+                    agent.updateRotation =true;
                     agent.SetDestination(grabbableObject.transform.position);
-                    yield return new WaitUntil(()=>Vector3.Distance(grabbableObject.transform.position,GameNetworkManager.Instance.localPlayerController.transform.position)<1f);
+                    //yield return new WaitUntil(()=>Vector3.Distance(grabbableObject.transform.position,GameNetworkManager.Instance.localPlayerController.transform.position)<2f);
+                    GameNetworkManager.Instance.localPlayerController.Crouch(false);
+                    yield return new WaitUntil(() => 
+                    Vector3.Distance(grabbableObject.transform.position, GameNetworkManager.Instance.localPlayerController.transform.position) < 1f || IsAgentStuck());
+                    agent.updateRotation = false;
+                    GameNetworkManager.Instance.localPlayerController.Crouch(true);
+                    agent.enabled = false;
+                    targettedGO = grabbableObject;
                     //GameNetworkManager.Instance.localPlayerController.Begi
-                    yield return new WaitForSeconds(5);
+                    yield return new WaitForSeconds(1);
+                    method.Invoke(GameNetworkManager.Instance.localPlayerController, null);
+                    GameNetworkManager.Instance.localPlayerController.gameplayCamera.transform.localEulerAngles = Vector3.zero;
                 }
             }
+            targettedGO = null;
+            agent.enabled = true;
+            agent.updateRotation =true;
             agent.SetDestination(entranceTeleport.exitPoint.transform.position);
+            yield return new WaitUntil(()=>Vector3.Distance(entranceTeleport.exitPoint.transform.position,GameNetworkManager.Instance.localPlayerController.transform.position)<5f);
+            agent.enabled = false;
+            getExitTeleport().TeleportPlayer();
+            dropAllItems();
+            StartLooting();
         }
-        
+
+        float timeStuck = 0f;
+        public Vector3 lastPosition = Vector3.zero;
+        bool IsAgentStuck()
+        {
+            return false;
+            // Check if the agent has not moved significantly
+            if (Vector3.Distance(GameNetworkManager.Instance.localPlayerController.transform.position, lastPosition) < 1f)
+            {
+                // Increment time stuck if the agent has not moved
+                timeStuck += Time.deltaTime;
+            }
+            else
+            {
+                // Reset the stuck time if the agent has moved
+                timeStuck = 0f;
+            }
+
+            // Return true if the agent has been stuck for longer than the threshold time
+            return timeStuck > 5f;
+        }
+
         public Vector3 getRandomNodePosition()
         {
             GameObject[] allAINodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
             System.Random random = new System.Random();
             return allAINodes[random.Next(allAINodes.Length)].transform.position;
 
+        }
+
+        public GrabbableObject[] get4Items(Vector3 door)
+        {
+            GrabbableObject[] grabbableObjects = GameObject.FindObjectsOfType<GrabbableObject>();
+            List<GrabbableObject> oneHandedList = grabbableObjects.Where(go => go.isInFactory && go.scrapValue > 3 && !go.itemProperties.twoHanded).ToArray().OrderBy(o => CalculatePathDistance(door, o.transform.position)).ToList<GrabbableObject>();
+            List<GrabbableObject> twoHandedList = grabbableObjects.Where(go => go.isInFactory && go.scrapValue > 3 && go.itemProperties.twoHanded).ToArray().OrderBy(o => CalculatePathDistance(door, o.transform.position)).ToList<GrabbableObject>();
+            List<GrabbableObject> output = OrderByDistance(oneHandedList, 3);
+            output.Reverse();
+            return output.ToArray().Concat(twoHandedList.Take(1).ToList()).ToArray();
+        }
+        List<GrabbableObject> OrderByDistance(List<GrabbableObject> list, int outItems)
+        {
+            if (list.Count <= 1)
+            {
+                return list;
+            }
+
+            // Create a list to hold the ordered GameObjects
+            var orderedList = new List<GrabbableObject> { list[0] };
+            list.RemoveAt(0);
+
+            // Find the nearest GameObject to the last added one
+            while (list.Count > 0 && orderedList.Count < outItems)
+            {
+                GrabbableObject lastAdded = orderedList.Last();
+                var nearest = list
+                    .Select(go => new { GameObject = go, Distance = CalculatePathDistance(lastAdded.transform.position, go.transform.position) })
+                    .OrderBy(x => x.Distance)
+                    .First().GameObject;
+
+                orderedList.Add(nearest);
+                list.Remove(nearest);
+            }
+
+            return orderedList;
         }
 
         public EntranceTeleport getEnteranceTeleport()
@@ -538,6 +617,43 @@ namespace LCDuels
                 }
             }
             return teleports[0];
+        }
+        public EntranceTeleport getExitTeleport()
+        {
+            EntranceTeleport[] teleports = GameObject.FindObjectsOfType<EntranceTeleport>();
+            foreach (EntranceTeleport teleport in teleports)
+            {
+                if (!teleport.isEntranceToBuilding)
+                {
+                    return teleport;
+                }
+            }
+            return teleports[0];
+        }
+        public void dropAllItems()
+        {
+            GameNetworkManager.Instance.localPlayerController.DropAllHeldItems();
+        }
+
+        public static float CalculatePathDistance(Vector3 startPoint, Vector3 endPoint)
+        {
+            NavMeshPath path = new NavMeshPath();
+            if (NavMesh.CalculatePath(startPoint, endPoint, NavMesh.AllAreas, path))
+            {
+                float distance = 0.0f;
+                if (path.corners.Length > 1)
+                {
+                    for (int i = 1; i < path.corners.Length; i++)
+                    {
+                        distance += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+                    }
+                }
+                return distance;
+            }
+            else
+            {
+                return float.PositiveInfinity; // or some indication that the path is not valid
+            }
         }
     }
 }

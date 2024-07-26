@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using System.Reflection;
 
 namespace LCDuels.Patches
 {
@@ -18,13 +19,50 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void Postfix(PlayerControllerB __instance)
         {
+            //__instance.gameplayCamera.transform.localRotation = Quaternion.Euler(70, 0, 0);
+            //__instance.gameplayCamera.transform.LookAt(new Vector3 (0, 0, 0));
+            //UnityEngine.Debug.Log(1
+            //+"\n"+__instance.gameplayCamera.transform.rotation.eulerAngles
+            //+"\n" + __instance.gameplayCamera.transform.localRotation.eulerAngles
+            //+"\n" + __instance.gameplayCamera.transform.parent.rotation.eulerAngles
+            //+"\n" + __instance.gameplayCamera.transform.parent.localRotation.eulerAngles);
+            LCDuelsModBase.Instance.lastPosition = __instance.transform.position;
             if (LCDuelsModBase.Instance.targettedGO != null)
             {
-                Vector3 direction = (LCDuelsModBase.Instance.targettedGO.transform.position - LCDuelsModBase.Instance.agent.transform.position).normalized;
-                Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, direction.y, direction.z));
-                LCDuelsModBase.Instance.agent.transform.rotation = lookRotation;
-                GameNetworkManager.Instance.localPlayerController.gameplayCamera.transform.rotation = lookRotation;
+                //Vector3 direction = (LCDuelsModBase.Instance.targettedGO.transform.position - GameNetworkManager.Instance.localPlayerController.gameplayCamera.transform.position).normalized;
+                __instance.gameplayCamera.transform.LookAt(LCDuelsModBase.Instance.targettedGO.transform);
+                FieldInfo field = __instance.GetType().GetField("cameraUp", BindingFlags.NonPublic | BindingFlags.Instance);
+                field.SetValue(__instance, __instance.gameplayCamera.transform.localEulerAngles.x);
+                //Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+                //LCDuelsModBase.Instance.agent.transform.rotation = lookRotation;
+                //GameNetworkManager.Instance.localPlayerController.gameplayCamera.transform.rotation = lookRotation;
+                //__instance.thisPlayerBody.Rotate(new Vector3(0f, direction.y, 0f), Space.Self);
+                //__instance.thisPlayerBody.rotation = Quaternion.LookRotation(new Vector3(0f, direction.y, 0f));
+                //float cameraUp = -80f;
+                //__instance.smoothLookTurnCompass.localEulerAngles = new Vector3(
+                //    cameraUp,
+                //    __instance.smoothLookTurnCompass.localEulerAngles.y, 
+                //    __instance.smoothLookTurnCompass.localEulerAngles.z);
+                //__instance.smoothLookTurnCompass.eulerAngles = new Vector3(
+                //    __instance.smoothLookTurnCompass.eulerAngles.x, 
+                //    __instance.smoothLookTurnCompass.eulerAngles.y, 
+                //    __instance.thisPlayerBody.transform.eulerAngles.z);
+                //__instance.thisPlayerBody.eulerAngles = new Vector3(
+                //    __instance.thisPlayerBody.eulerAngles.x, 
+                //    __instance.smoothLookTurnCompass.eulerAngles.y, 
+                //    __instance.thisPlayerBody.eulerAngles.z);
+                //__instance.gameplayCamera.transform.localEulerAngles = new Vector3(
+                //    cameraUp, 
+                //    __instance.gameplayCamera.transform.localEulerAngles.y, 
+                //    __instance.gameplayCamera.transform.localEulerAngles.z);
             }
+        }
+
+        [HarmonyPatch("CalculateSmoothLookingInput")]
+        [HarmonyPrefix]
+        static bool patchCalculate()
+        {
+            return LCDuelsModBase.Instance.targettedGO == null;
         }
 
         [HarmonyPatch(nameof(PlayerControllerB.SetItemInElevator))]
@@ -65,6 +103,12 @@ namespace LCDuels.Patches
             LCDuelsModBase.Instance.death = true;
             LCDuelsModBase.Instance.WaitingForResult();
             _ = LCDuelsModBase.Instance.SendMessage(new { type = "death" });
+        }
+        [HarmonyPatch(nameof(PlayerControllerB.DamagePlayer))]
+        [HarmonyPrefix]
+        static bool patchDamage()
+        {
+            return false;
         }
     }
 }
