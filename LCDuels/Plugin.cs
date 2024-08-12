@@ -26,61 +26,43 @@ namespace LCDuels
     {
         private const string modGUID = "onty.duels";
         private const string modName = "LCDuels";
-        private const string modVersion = "1.1.1.0";
-
+        private const string modVersion = "1.2.0.0";
         private readonly Harmony harmony = new Harmony(modGUID);
-
         public static LCDuelsModBase Instance;
-
         internal ManualLogSource mls;
-        
         public int seedFromServer = 64;
-
         public static TextMeshPro inGameStatusText;
-
         public static bool playing = true;
-
         public string enemyPlayerName = "Waiting";
-
         public string enemyPlayerScrap = "0"; //0 same, 1 less, 2 more
-
         public string enemyPlayerLocation = "in ship"; //0 ship, 1 outisde, 2 inside 
-
         public bool gameReady = false;
-
         public bool isInShip = true;
-
         public bool wsTerminated = false;
-
         public string endOfGameResult = "";
-
         public int currentValue = 0;
-
         public bool gameStarted = false;
-
         public bool DisconnectDone = false;
-
         public bool waitingForResult = false;
-
         public bool death = false;
-
         public string versionString = "";
-
         public bool gameEndedWithError = false;
-
         public string queueName = "";
         public static bool debug = false;
-
         public bool isPublicQueue = false;
-
         public ClientWebSocket localWS = null;
         public Terminal terminal = null;
         public StartMatchLever matchLever = null;
         public MenuManager menuManager = null;
-
         public TextMeshProUGUI publicText;
         public TextMeshProUGUI friendsText;
         public TextMeshProUGUI serverName;
+        public int gameMode = 0; // 0-undefined, 1-BO1, 2-BO3, 3-HQ
+        public int yourScore = 0;
+        public int enemyScore = 0;
+        public int curDay = 1;
+        public int curQuota = 1;
+        public bool ejected = false;
 
         public void ResetValues(bool isEnabled)
         {
@@ -98,6 +80,12 @@ namespace LCDuels
             waitingForResult = false;
             death = false;  
             gameEndedWithError = false;
+            gameMode = 0;
+            yourScore = 0;
+            enemyScore = 0;
+            curDay = 1;
+            curQuota = 1;
+            ejected = false;
         }
 
         public int getRandomMapID()
@@ -117,13 +105,54 @@ namespace LCDuels
                 return output + 2;
             }
         }
+        public int getRandomMapIDByTier(int tier)
+        {
+            System.Random ra = new System.Random(seedFromServer);
+            int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
+            if (output < 3)
+            {
+                return output;
+            }
+            else if (output < 10)
+            {
+                return output + 1;
+            }
+            else
+            {
+                return output + 2;
+            }
+        }
 
         public void UpdateInGameStatusText()
         {
-            HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
-            HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
-            HUDManager.Instance.controlTipLines[2].text = "VS: "+enemyPlayerName;
-            HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
+            switch (gameMode)
+            {
+                case 1:
+                    HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
+                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
+                    HUDManager.Instance.controlTipLines[2].text = "VS: "+enemyPlayerName;
+                    HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
+                    break;
+                case 2:
+                    HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
+                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
+                    HUDManager.Instance.controlTipLines[2].text = "You "+yourScore+":"+enemyScore+" "+enemyPlayerName;
+                    HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
+                    break;
+                case 3:
+                    HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
+                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
+                    HUDManager.Instance.controlTipLines[2].text = "You "+yourScore+":"+enemyScore+" "+enemyPlayerName;
+                    HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
+                    break;
+                default:
+                    HUDManager.Instance.controlTipLines[0].text = "error";
+                    HUDManager.Instance.controlTipLines[1].text = "error";
+                    HUDManager.Instance.controlTipLines[2].text = "error";
+                    HUDManager.Instance.controlTipLines[3].text = "error";
+                    break;
+
+            }
         }
 
         void Awake()
@@ -208,6 +237,7 @@ namespace LCDuels
                 if (GameNetworkManager.Instance.isHostingGame && !wsTerminated)
                 {
                     gameEndedWithError = true;
+                    waitingForResult = true;
                     endOfGameResult = "Lost connection to server";
                 }
             }
@@ -253,7 +283,6 @@ namespace LCDuels
                     {
                         text = "";
                     }
-                    string levelDescription = StartOfRound.Instance.currentLevel.LevelDescription;
                     StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
                     {
                         "Pull the lever to get ready\nOrbiting: ",
@@ -313,15 +342,18 @@ namespace LCDuels
 
                 case "error":
                     gameEndedWithError = true;
+                    waitingForResult = true;
                     endOfGameResult = data["value"].ToString();
                     break;
 
                 case "opponent_left":
                     mls.LogInfo("Your opponent has left the game.");
+                    HUDManager.Instance.DisplayTip("You won!","You can leave or finish the day. Your opponent has left the game!");
                     endOfGameResult = "Won, opponent left";
                     break;
 
                 case "won":
+                    HUDManager.Instance.DisplayTip("You won!","You can leave or finish the day");
                     switch (data["value"])
                     {
                         case "1":
@@ -346,6 +378,7 @@ namespace LCDuels
                     break;
 
                 case "lost":
+                    HUDManager.Instance.DisplayTip("You lost!","You can leave or finish the day");
                     switch (data["value"])
                     {
                         case "2":
@@ -370,6 +403,7 @@ namespace LCDuels
                     break;
                 case "in_game_error":
                     gameEndedWithError = true;
+                    waitingForResult = true;
                     endOfGameResult = "Something went wrong, please restart the game!";
                     break;
                 case "chat":
@@ -377,6 +411,10 @@ namespace LCDuels
 
                     targetMethod.Invoke(HUDManager.Instance, new object[] { data["value"], enemyPlayerName });
                     HUDManager.Instance.PingHUDElement(HUDManager.Instance.Chat, 2f, 1f, 0.2f);
+                    break;
+                case "new_seed":
+                    seedFromServer = int.Parse(data["seed"].ToString());
+                    StartOfRound.Instance.randomMapSeed = seedFromServer;
                     break;
 
                 default:
@@ -418,17 +456,22 @@ namespace LCDuels
                 steamUsername = SteamClient.Name.ToString(),
                 queueName,                
                 version = versionString,
+                gameMode
             };
             mls.LogInfo("Registering with username: " + message.steamUsername + "-"+queueName);
             await SendMessage(message);
         }
 
+        //This is called on death/liftoff
         public void WaitingForResult()
         {
-            waitingForResult = true;
-            matchLever.triggerScript.disabledHoverTip = "[ Waiting for end of game ]";
-            matchLever.triggerScript.interactable = false;
-            UpdateDisplayWaitingForResult();
+            if (gameMode == 1 || (gameMode == 2 && curDay == 3) || (gameMode == 3 && ejected))
+            {
+                waitingForResult = true;
+                matchLever.triggerScript.disabledHoverTip = "[ Waiting for end of game ]";
+                matchLever.triggerScript.interactable = false;
+                UpdateDisplayWaitingForResult();
+            }
         }
 
         public async Task SendMessage(object message)
@@ -451,7 +494,7 @@ namespace LCDuels
         public IEnumerator waitUntilEndOfGame()
         {
             mls.LogInfo("Wait until end of game");
-            yield return new WaitUntil(()=>endOfGameResult!="");
+            yield return new WaitUntil(()=>endOfGameResult!=""&&waitingForResult);
             mls.LogInfo("Ending game");
             yield return new WaitForSeconds(3);
             GameNetworkManager.Instance.Disconnect();

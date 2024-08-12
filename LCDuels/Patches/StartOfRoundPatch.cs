@@ -47,15 +47,29 @@ namespace LCDuels.Patches
             return !LCDuelsModBase.playing;
         }
 
-        [HarmonyPatch(nameof(StartOfRound.ShipHasLeft))]
-        [HarmonyPrefix]
-        static void patchShipHasLeft()
+        [HarmonyPatch(nameof(StartOfRound.ManuallyEjectPlayersServerRpc))]
+        [HarmonyPostfix]
+        static void patchEject()
+        {
+            LCDuelsModBase.Instance.ejected = true;
+            LCDuelsModBase.Instance.waitingForResult = true;
+        }
+
+        [HarmonyPatch("PassTimeToNextDay")]
+        [HarmonyPostfix]
+        static void patchPassTimeToNextDay()
         {
             if (LCDuelsModBase.playing)
             {
                 LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
                 LCDuelsModBase.Instance.WaitingForResult();
                 _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff" });
+                int tempCurDay = 4 - TimeOfDay.Instance.daysUntilDeadline;
+                if (LCDuelsModBase.Instance.curDay < tempCurDay)
+                {
+                    LCDuelsModBase.Instance.curQuota++;
+                }
+                LCDuelsModBase.Instance.curDay = tempCurDay;
             }
         }
     }

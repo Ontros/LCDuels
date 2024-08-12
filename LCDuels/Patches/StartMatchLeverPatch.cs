@@ -15,7 +15,7 @@ namespace LCDuels.Patches
     {
         [HarmonyPatch(nameof(StartMatchLever.PullLever))]
         [HarmonyPrefix]
-        static bool patchChooseNewRandomMapSeed(StartMatchLever __instance)
+        static bool patchPullLever(StartMatchLever __instance)
         {
             if (LCDuelsModBase.playing)
             {
@@ -30,7 +30,7 @@ namespace LCDuels.Patches
                 }
                 else if (LCDuelsModBase.Instance.gameReady)
                 {
-                    //Ready so start game
+                    //Ready for game to start
                     return true;
                 }
                 else
