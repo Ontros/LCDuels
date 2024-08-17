@@ -47,7 +47,7 @@ namespace LCDuels.Patches
             return !LCDuelsModBase.playing;
         }
 
-        [HarmonyPatch(nameof(StartOfRound.ManuallyEjectPlayersServerRpc))]
+        [HarmonyPatch(nameof(StartOfRound.FirePlayersAfterDeadlineClientRpc))]
         [HarmonyPostfix]
         static void patchEject()
         {

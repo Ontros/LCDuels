@@ -63,6 +63,7 @@ namespace LCDuels
         public int curDay = 1;
         public int curQuota = 1;
         public bool ejected = false;
+        public List<SaveFileUISlot> saveFileUISlots = new List<SaveFileUISlot>();
 
         public void ResetValues(bool isEnabled)
         {
@@ -178,6 +179,7 @@ namespace LCDuels
             harmony.PatchAll(typeof(MenuManagerPatch));
             harmony.PatchAll(typeof(EntranceTeleportPatch));
             harmony.PatchAll(typeof(ItemDropShipPatch));
+            harmony.PatchAll(typeof(SaveFileUISlotPatch));
         }
 
         public async Task InitWS()

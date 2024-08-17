@@ -169,7 +169,6 @@ namespace LCDuels.Patches
 
         public static void OnPlayLCDuelsMenuOpen()
         {
-            LCDuelsModBase.Instance.menuManager.EnableLeaderboardDisplay(false);
             LCDuelsModBase.Instance.menuManager.HostSettingsScreen.SetActive(true);
             LCDuelsModBase.playing = true;
             LCDuelsModBase.Instance.publicText.text = "Public Queue";
@@ -192,6 +191,7 @@ namespace LCDuels.Patches
             }
             LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text = "";
             LCDuelsModBase.Instance.menuManager.HostSetLobbyPublic(true);
+            LCDuelsModBase.Instance.menuManager.EnableLeaderboardDisplay(false);
         }
 
         public static void PrintChildren(GameObject parent)
