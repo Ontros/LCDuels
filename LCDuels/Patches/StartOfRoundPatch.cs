@@ -51,8 +51,12 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchEject()
         {
-            LCDuelsModBase.Instance.ejected = true;
-            LCDuelsModBase.Instance.waitingForResult = true;
+            if (LCDuelsModBase.playing)
+            {
+                LCDuelsModBase.Instance.ejected = true;
+                LCDuelsModBase.Instance.waitingForResult = true;
+                _ = LCDuelsModBase.Instance.SendMessage(new { type = "eject", curDay = LCDuelsModBase.Instance.curDay, curQuota = LCDuelsModBase.Instance.curQuota });
+            }
         }
 
         [HarmonyPatch("PassTimeToNextDay")]
@@ -63,13 +67,13 @@ namespace LCDuels.Patches
             {
                 LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
                 LCDuelsModBase.Instance.WaitingForResult();
-                _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff" });
                 int tempCurDay = 4 - TimeOfDay.Instance.daysUntilDeadline;
                 if (LCDuelsModBase.Instance.curDay < tempCurDay)
                 {
                     LCDuelsModBase.Instance.curQuota++;
                 }
                 LCDuelsModBase.Instance.curDay = tempCurDay;
+                _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff", curDay = tempCurDay, curQuota = LCDuelsModBase.Instance.curQuota });
             }
         }
     }
