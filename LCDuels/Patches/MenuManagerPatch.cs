@@ -71,7 +71,7 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchOnUpdate(MenuManager __instance)
         {
-            if (LCDuelsModBase.playing)
+            if (LCDuelsModBase.playing && __instance.lobbyTagInputField.gameObject != null)
             {
                 __instance.lobbyTagInputField.gameObject.SetActive(false);
             }
@@ -83,6 +83,7 @@ namespace LCDuels.Patches
         {
             LCDuelsModBase.playing = false;
             LCDuelsModBase.Instance.allowSaveLoading();
+            LCDuelsModBase.Instance.saveFileUISlots.Clear();
             //DeleteFileButton saveFileUISlot = UnityEngine.Object.FindFirstObjectByType<DeleteFileButton>();
             //Debug.Log(saveFileUISlot);
             //if (saveFileUISlot != null )
@@ -135,15 +136,16 @@ namespace LCDuels.Patches
                 LCDuelsModBase.Instance.isPublicQueue = setPublic;
                 if (setPublic)
                 {
-                    LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For public queue you have to follow the rules and play on the current version";
+                    LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For public queue you have to follow the rules and play on the current version and its only Bo1 game mode.";
                     LCDuelsModBase.Instance.menuManager.lobbyNameInputField.text = "";
                     LCDuelsModBase.Instance.menuManager.lobbyNameInputField.enabled = false;
                     TextMeshProUGUI placeholderText = LCDuelsModBase.Instance.menuManager.lobbyNameInputField.GetComponentInChildren<TextMeshProUGUI>();
                     placeholderText.text = "Leave empty";
+                    SelectFileByFileNum(1);
                 }
                 else
                 {
-                    LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For private queue select the same queue name as the players you want to queue up with and make sure you have matching mods and version";
+                    LCDuelsModBase.Instance.menuManager.privatePublicDescription.text = "For private queue select the same queue name as the players you want to queue up with and make sure you have matching game mode, mods and version. Game mode is based on the first player that joins.";
                     LCDuelsModBase.Instance.menuManager.lobbyNameInputField.enabled = true;
                     TextMeshProUGUI placeholderText = LCDuelsModBase.Instance.menuManager.lobbyNameInputField.GetComponentInChildren<TextMeshProUGUI>();
                     placeholderText.text = "Name your queue...";
@@ -167,8 +169,20 @@ namespace LCDuels.Patches
             }
         }
 
+        public static void SelectFileByFileNum(int fileNum)
+        {
+            foreach (SaveFileUISlot saveFileUISlot in LCDuelsModBase.Instance.saveFileUISlots)
+            {
+                if (saveFileUISlot.fileNum == fileNum)
+                {
+                    saveFileUISlot.SetFileToThis();
+                }
+            }
+        }
+
         public static void OnPlayLCDuelsMenuOpen()
         {
+            LCDuelsModBase.Instance.saveFileUISlots.Clear();
             LCDuelsModBase.Instance.menuManager.HostSettingsScreen.SetActive(true);
             LCDuelsModBase.playing = true;
             LCDuelsModBase.Instance.publicText.text = "Public Queue";

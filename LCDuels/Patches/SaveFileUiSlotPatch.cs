@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TMPro;
+using UnityEngine;
 
 namespace LCDuels.Patches
 {
@@ -17,34 +18,77 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void OnEnablePatch(SaveFileUISlot __instance)
         {
-            UnityEngine.Debug.Log("1eneable save file UI slot");
             LCDuelsModBase.Instance.saveFileUISlots.Add(__instance);
-            UnityEngine.Debug.Log("2eneable save file UI slot"+__instance.fileNum);
-            TextMeshProUGUI fileNameText = __instance.gameObject.transform.Find("Text (TMP)").GetComponent<TextMeshProUGUI>();
+            if (!LCDuelsModBase.playing)
+            {
+                return;
+            }
+            if (__instance.fileNum == -1)
+            {
+                __instance.enabled = false;
+                LCDuelsModBase.Instance.specialTipText = __instance.specialTipText;
+            }
+            else
+            {
+            Transform text = __instance.gameObject.transform.Find("Text (TMP)");
+            UnityEngine.Debug.Log(text);
+            TextMeshProUGUI fileNameText = text.GetComponent<TextMeshProUGUI>();
+            __instance.fileStatsText.text = "";
+            __instance.fileNotCompatibleAlert.enabled = false;
             switch (__instance.fileNum)
             {
                 case -1:
-            UnityEngine.Debug.Log("-1eneable save file UI slot");
                     __instance.enabled = false;
                     break;
                 case 0:
-            UnityEngine.Debug.Log("0eneable save file UI slot");
-                    fileNameText.text = "Bo1";
+                    fileNameText.text = "Best of 1";
+                    __instance.transform.parent.Find("EnterAName").GetComponent<TextMeshProUGUI>().text = "Game modes";
                     break;
                case 1:
-            UnityEngine.Debug.Log("1eneable save file UI slot");
-                    fileNameText.text = "Bo3";
+                    fileNameText.text = "Best of 3";
                     break;
                case 2:
-            UnityEngine.Debug.Log("2eneable save file UI slot");
                     fileNameText.text = "High quota";
                     break;
             }
-            UnityEngine.Debug.Log("3eneable save file UI slot");
-            __instance.fileStatsText.text = "";
-            UnityEngine.Debug.Log("4eneable save file UI slot");
-            __instance.fileNotCompatibleAlert.enabled = false;
-            __instance.transform.parent.Find("EnterAName").GetComponent<TextMeshProUGUI>().text = "Game modes";
+            }
+        }
+
+        [HarmonyPatch(nameof(SaveFileUISlot.SetFileToThis))]
+        [HarmonyPostfix]
+        static void patchSetFileToThis(SaveFileUISlot __instance)
+        {
+            if (!LCDuelsModBase.playing)
+            {
+                return;
+            }
+            if (LCDuelsModBase.Instance.isPublicQueue)
+            {
+                LCDuelsModBase.Instance.specialTipText.text = "Try to get as much loot as possible in 1 day without dying.";
+                GameNetworkManager.Instance.currentSaveFileName = "LCSaveFile1";
+                GameNetworkManager.Instance.saveFileNum = 1;
+                LCDuelsModBase.Instance.gameMode = 1;
+            }
+            else
+            {
+            switch (__instance.fileNum)
+            {
+                case 0:
+                LCDuelsModBase.Instance.gameMode = 1;
+                    LCDuelsModBase.Instance.specialTipText.text = "Try to get as much loot as possible in 1 day without dying."; 
+                    break;
+               case 1:
+                LCDuelsModBase.Instance.gameMode = 2;
+                    LCDuelsModBase.Instance.specialTipText.text = "You get a point for getting more loot in a day. You have 3 days to win.";
+                    break;
+               case 2:
+                LCDuelsModBase.Instance.gameMode = 3;
+                    LCDuelsModBase.Instance.specialTipText.text = "Whoever survives more days without ejecting wins.";
+                    break;
+            }
+            }
+            __instance.SetButtonColorForAllFileSlots();
+            LCDuelsModBase.Instance.specialTipText.enabled = true;
         }
     }
 }

@@ -64,6 +64,7 @@ namespace LCDuels
         public int curQuota = 1;
         public bool ejected = false;
         public List<SaveFileUISlot> saveFileUISlots = new List<SaveFileUISlot>();
+        public TextMeshProUGUI specialTipText;
 
         public void ResetValues(bool isEnabled)
         {
@@ -261,6 +262,7 @@ namespace LCDuels
                     string opponentId = data["opponentId"].ToString();
                     enemyPlayerName = data["opponentUsername"].ToString();
                     seedFromServer = int.Parse(data["seed"].ToString());
+                    gameMode = int.Parse(data["gameMode"].ToString());
                     mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
                     System.Random lmfao = new System.Random(seedFromServer);
                     int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
@@ -276,14 +278,24 @@ namespace LCDuels
                     StartOfRound.Instance.ChangeLevel(getRandomMapID());
                     StartOfRound.Instance.SetPlanetsWeather();
                     UpdateInGameStatusText();
-                    string text;
+                    string text = "";
+                    if (gameMode == 1)
+                    {
+                            text = "Best of 1\n";
+                    }
+                    else if (gameMode == 2)
+                    {
+                            text = "Best of 3\n";
+
+                    }
+                    else if (gameMode == 3)
+                    {
+                            text = "High quota\n";
+
+                    }
                     if (StartOfRound.Instance.currentLevel.currentWeather != LevelWeatherType.None)
                     {
-                        text = "Weather: " + StartOfRound.Instance.currentLevel.currentWeather.ToString();
-                    }
-                    else
-                    {
-                        text = "";
+                        text += "Weather: " + StartOfRound.Instance.currentLevel.currentWeather.ToString();
                     }
                     StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
                     {
@@ -510,7 +522,7 @@ namespace LCDuels
         }
         public void allowSaveLoading()
         {
-            LCDuelsModBase.Instance.mls.LogInfo("Preventing loading a save");
+            LCDuelsModBase.Instance.mls.LogInfo("Allowing loading a save");
             GameNetworkManager.Instance.currentSaveFileName = "LCSaveFile1";
             GameNetworkManager.Instance.saveFileNum = 1;
         }
