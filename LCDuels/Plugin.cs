@@ -470,6 +470,7 @@ namespace LCDuels
                 steamUsername = SteamClient.Name.ToString(),
                 queueName,                
                 version = versionString,
+                modVersion,
                 gameMode
             };
             mls.LogInfo("Registering with username: " + message.steamUsername + "-"+queueName);
