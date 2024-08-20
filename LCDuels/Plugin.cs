@@ -265,19 +265,22 @@ namespace LCDuels
                     seedFromServer = int.Parse(data["seed"].ToString());
                     gameMode = int.Parse(data["gameMode"].ToString());
                     mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
-                    System.Random lmfao = new System.Random(seedFromServer);
-                    int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
-                    terminal.groupCredits = startingCash[lmfao.Next(0, startingCash.Length)];
-                    if (lmfao.Next(0, 10000) == 6942)
-                    {
-                        terminal.groupCredits = int.MaxValue;
-                    }
                     StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
                     matchLever.triggerScript.hoverTip = "[Pull to get ready]";
                     matchLever.triggerScript.interactable = true;
                     StartOfRound.Instance.randomMapSeed = seedFromServer;
-                    StartOfRound.Instance.ChangeLevel(getRandomMapID());
-                    StartOfRound.Instance.SetPlanetsWeather();
+                    if (gameMode != 3)
+                    {
+                        System.Random lmfao = new System.Random(seedFromServer);
+                        int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
+                        terminal.groupCredits = startingCash[lmfao.Next(0, startingCash.Length)];
+                        if (lmfao.Next(0, 10000) == 6942)
+                        {
+                            terminal.groupCredits = int.MaxValue;
+                        }
+                        StartOfRound.Instance.ChangeLevel(getRandomMapID());
+                        StartOfRound.Instance.SetPlanetsWeather();
+                    }
                     UpdateInGameStatusText();
                     string text = "";
                     if (gameMode == 1)
@@ -368,6 +371,14 @@ namespace LCDuels
                     break;
 
                 case "won":
+                    if (gameMode == 2 && (string)data["value"] != "15")
+                    {
+                        HUDManager.Instance.DisplayTip("Won the day", "You can pull the lever now");
+                        yourScore = int.Parse(data["yourScore"].ToString());
+                        enemyScore = int.Parse(data["enemyScore"].ToString());
+                    }
+                    else
+                    {
                     HUDManager.Instance.DisplayTip("You won!","You can leave or finish the day");
                     switch (data["value"])
                     {
@@ -390,9 +401,18 @@ namespace LCDuels
                             endOfGameResult = "Won, reason unknown";
                             break;
                     }
+                    }
                     break;
 
                 case "lost":
+                    if (gameMode == 2 && (string)data["value"] != "15")
+                    {
+                        HUDManager.Instance.DisplayTip("Lost the day", "You can pull the lever now");
+                        yourScore = int.Parse(data["yourScore"].ToString());
+                        enemyScore = int.Parse(data["enemyScore"].ToString());
+                    }
+                    else
+                    {
                     HUDManager.Instance.DisplayTip("You lost!","You can leave or finish the day");
                     switch (data["value"])
                     {
@@ -414,6 +434,7 @@ namespace LCDuels
                         default:
                             endOfGameResult = "Lost, reason unknown";
                             break;
+                    }
                     }
                     break;
                 case "in_game_error":
