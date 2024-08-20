@@ -259,6 +259,7 @@ namespace LCDuels
             switch (messageType)
             {
                 case "match_found":
+                    StartOfRound.Instance.ResetShip();
                     string opponentId = data["opponentId"].ToString();
                     enemyPlayerName = data["opponentUsername"].ToString();
                     seedFromServer = int.Parse(data["seed"].ToString());
