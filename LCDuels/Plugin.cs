@@ -397,6 +397,15 @@ namespace LCDuels
                         case "9":
                             endOfGameResult = "Won, because you had the same amount of loot but you survived longer";
                             break;
+                            case "11":
+                                endOfGameResult = "Won, because you survived more days";
+                                break;
+                            case "13":
+                                endOfGameResult = "Won, because you survived the same amount of days but you had more loot on ship";
+                                break;
+                            case "15":
+                                endOfGameResult = "Won, because you got 2 points first";
+                                break;
                         default:
                             endOfGameResult = "Won, reason unknown";
                             break;
@@ -431,6 +440,15 @@ namespace LCDuels
                         case "10":
                             endOfGameResult = "Lost, because you had the same amount of loot but you died sooner";
                             break;
+                            case "12":
+                                endOfGameResult = "Lost, because you survived less days";
+                                break;
+                            case "14":
+                                endOfGameResult = "Lost, because you survived the same amount of days but you had less loot on ship";
+                                break;
+                            case "16":
+                                endOfGameResult = "Lost, because the enemy got 2 points first";
+                                break;
                         default:
                             endOfGameResult = "Lost, reason unknown";
                             break;
