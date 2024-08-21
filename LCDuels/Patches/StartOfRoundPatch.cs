@@ -21,7 +21,17 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.playing)
             {
                 LCDuelsModBase.Instance.mls.LogInfo("patchChooseNewRandomMapSeed called");
-                StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID());
+                System.Random lmfao = new System.Random(LCDuelsModBase.Instance.seedFromServer);
+                int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
+                lmfao.Next(0, startingCash.Length);
+                if (LCDuelsModBase.Instance.gameMode == 2)
+                {
+                    StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapIDByTier(1+LCDuelsModBase.Instance.enemyScore+LCDuelsModBase.Instance.yourScore,lmfao));
+                }
+                else
+                {
+                    StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID(lmfao));
+                }
                 ___randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
                 StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
             }
@@ -55,7 +65,7 @@ namespace LCDuels.Patches
             {
                 LCDuelsModBase.Instance.ejected = true;
                 LCDuelsModBase.Instance.waitingForResult = true;
-                _ = LCDuelsModBase.Instance.SendMessage(new { type = "eject", curDay = LCDuelsModBase.Instance.curDay, curQuota = LCDuelsModBase.Instance.curQuota });
+                _ = LCDuelsModBase.Instance.SendMessage(new { type = "eject", curDay = LCDuelsModBase.Instance.curDay });
             }
         }
 
@@ -67,13 +77,9 @@ namespace LCDuels.Patches
             {
                 LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
                 LCDuelsModBase.Instance.WaitingForResult();
-                int tempCurDay = 4 - TimeOfDay.Instance.daysUntilDeadline;
-                if (LCDuelsModBase.Instance.curDay < tempCurDay)
-                {
-                    LCDuelsModBase.Instance.curQuota++;
-                }
-                LCDuelsModBase.Instance.curDay = tempCurDay;
-                _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff", curDay = tempCurDay, curQuota = LCDuelsModBase.Instance.curQuota });
+                LCDuelsModBase.Instance.curDay++;
+                LCDuelsModBase.Instance.UpdateInGameStatusText();
+                _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff", curDay = LCDuelsModBase.Instance.curDay });
             }
         }
     }

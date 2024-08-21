@@ -48,7 +48,7 @@ namespace LCDuels
         public string versionString = "";
         public bool gameEndedWithError = false;
         public string queueName = "";
-        public static bool debug = false;
+        public static bool debug = true;
         public bool isPublicQueue = false;
         public ClientWebSocket localWS = null;
         public Terminal terminal = null;
@@ -61,7 +61,6 @@ namespace LCDuels
         public int yourScore = 0;
         public int enemyScore = 0;
         public int curDay = 1;
-        public int curQuota = 1;
         public bool ejected = false;
         public List<SaveFileUISlot> saveFileUISlots = new List<SaveFileUISlot>();
         public TextMeshProUGUI specialTipText;
@@ -82,17 +81,18 @@ namespace LCDuels
             waitingForResult = false;
             death = false;  
             gameEndedWithError = false;
-            gameMode = 0;
             yourScore = 0;
             enemyScore = 0;
             curDay = 1;
-            curQuota = 1;
             ejected = false;
         }
 
-        public int getRandomMapID()
+        public int getRandomMapID(System.Random ra)
         {
-            System.Random ra = new System.Random(seedFromServer);
+            foreach (SelectableLevel selectableLevel in StartOfRound.Instance.levels)
+            {
+                Console.WriteLine(selectableLevel.levelID+"-"+selectableLevel.name);
+            }
             int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
             if (output < 3)
             {
@@ -107,22 +107,31 @@ namespace LCDuels
                 return output + 2;
             }
         }
-        public int getRandomMapIDByTier(int tier)
+        public int getRandomMapIDByTier(int tier, System.Random ra)
         {
-            System.Random ra = new System.Random(seedFromServer);
-            int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
-            if (output < 3)
+            List<int> list = new List<int>();
+            if (tier == 1)
             {
-                return output;
+                list.Add(0);
+                list.Add(1);
+                list.Add(2);
             }
-            else if (output < 10)
+            else if (tier == 2)
             {
-                return output + 1;
+                list.Add(4);
+                list.Add(5);
+                list.Add(8);
+                list.Add(12);
             }
             else
             {
-                return output + 2;
+                list.Add(6);
+                list.Add(7);
+                list.Add(9);
+                list.Add(10);
             }
+            int output = ra.Next(0, list.Count-1);
+            return list[output];
         }
 
         public void UpdateInGameStatusText()
@@ -139,13 +148,13 @@ namespace LCDuels
                     HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
                     HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
                     HUDManager.Instance.controlTipLines[2].text = "You "+yourScore+":"+enemyScore+" "+enemyPlayerName;
-                    HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
+                    HUDManager.Instance.controlTipLines[3].text = "Your loot from this day "+currentValue;
                     break;
                 case 3:
                     HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
                     HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
-                    HUDManager.Instance.controlTipLines[2].text = "You "+yourScore+":"+enemyScore+" "+enemyPlayerName;
-                    HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
+                    HUDManager.Instance.controlTipLines[2].text = "Your total loot "+currentValue;
+                    HUDManager.Instance.controlTipLines[3].text = "Current day: "+LCDuelsModBase.Instance.curDay;
                     break;
                 default:
                     HUDManager.Instance.controlTipLines[0].text = "error";
@@ -259,56 +268,12 @@ namespace LCDuels
             switch (messageType)
             {
                 case "match_found":
-                    StartOfRound.Instance.ResetShip();
                     string opponentId = data["opponentId"].ToString();
                     enemyPlayerName = data["opponentUsername"].ToString();
                     seedFromServer = int.Parse(data["seed"].ToString());
                     gameMode = int.Parse(data["gameMode"].ToString());
                     mls.LogInfo($"Match found! Opponent: {enemyPlayerName} (ID: {opponentId})");
-                    StartMatchLever matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
-                    matchLever.triggerScript.hoverTip = "[Pull to get ready]";
-                    matchLever.triggerScript.interactable = true;
-                    StartOfRound.Instance.randomMapSeed = seedFromServer;
-                    if (gameMode != 3)
-                    {
-                        System.Random lmfao = new System.Random(seedFromServer);
-                        int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
-                        terminal.groupCredits = startingCash[lmfao.Next(0, startingCash.Length)];
-                        if (lmfao.Next(0, 10000) == 6942)
-                        {
-                            terminal.groupCredits = int.MaxValue;
-                        }
-                        StartOfRound.Instance.ChangeLevel(getRandomMapID());
-                        StartOfRound.Instance.SetPlanetsWeather();
-                    }
-                    UpdateInGameStatusText();
-                    string text = "";
-                    if (gameMode == 1)
-                    {
-                            text = "Best of 1\n";
-                    }
-                    else if (gameMode == 2)
-                    {
-                            text = "Best of 3\n";
-
-                    }
-                    else if (gameMode == 3)
-                    {
-                            text = "High quota\n";
-
-                    }
-                    if (StartOfRound.Instance.currentLevel.currentWeather != LevelWeatherType.None)
-                    {
-                        text += "Weather: " + StartOfRound.Instance.currentLevel.currentWeather.ToString();
-                    }
-                    StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
-                    {
-                        "Pull the lever to get ready\nOrbiting: ",
-                        StartOfRound.Instance.currentLevel.PlanetName,
-                        "\n",
-                        text
-                    });
-                    HUDManager.Instance.DisplayTip("Match found","Pull the lever to get ready");
+                    _ = matchFound();
                     break;
 
                 case "game_start":
@@ -376,6 +341,21 @@ namespace LCDuels
                         HUDManager.Instance.DisplayTip("Won the day", "You can pull the lever now");
                         yourScore = int.Parse(data["yourScore"].ToString());
                         enemyScore = int.Parse(data["enemyScore"].ToString());
+                        gameReady = false;
+                        yourScore = int.Parse(data["yourScore"].ToString());
+                        enemyScore = int.Parse(data["enemyScore"].ToString());
+                        terminal.groupCredits = 0;
+                        GameNetworkManager.Instance.SetLobbyJoinable(false);
+                        GameNetworkManager.Instance.disallowConnection = true;
+                        StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player\nYou can join our discord (dc.ontro.cz) to find people to play with.";
+                        if (matchLever != null)
+                        {
+                            matchLever.triggerScript.disabledHoverTip = "[Wait for the other player]";
+                            matchLever.triggerScript.interactable = false;
+
+                        }
+                        LCDuelsModBase.Instance.UpdateInGameStatusText();
+                        terminal.StartCoroutine(LCDuelsModBase.Instance.waitUntilEndOfGame());
                     }
                     else
                     {
@@ -419,6 +399,19 @@ namespace LCDuels
                         HUDManager.Instance.DisplayTip("Lost the day", "You can pull the lever now");
                         yourScore = int.Parse(data["yourScore"].ToString());
                         enemyScore = int.Parse(data["enemyScore"].ToString());
+                        gameReady = false;
+                        terminal.groupCredits = 0;
+                        GameNetworkManager.Instance.SetLobbyJoinable(false);
+                        GameNetworkManager.Instance.disallowConnection = true;
+                        StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player\nYou can join our discord (dc.ontro.cz) to find people to play with.";
+                        if (matchLever != null)
+                        {
+                            matchLever.triggerScript.disabledHoverTip = "[Wait for the other player]";
+                            matchLever.triggerScript.interactable = false;
+
+                        }
+                        LCDuelsModBase.Instance.UpdateInGameStatusText();
+                        terminal.StartCoroutine(LCDuelsModBase.Instance.waitUntilEndOfGame());
                     }
                     else
                     {
@@ -520,10 +513,18 @@ namespace LCDuels
         //This is called on death/liftoff
         public void WaitingForResult()
         {
-            if (gameMode == 1 || (gameMode == 2 && curDay == 3) || (gameMode == 3 && ejected))
+            if (gameMode == 1 || gameMode == 2 || (gameMode == 3 && ejected))
             {
                 waitingForResult = true;
-                matchLever.triggerScript.disabledHoverTip = "[ Waiting for end of game ]";
+                if (gameMode == 2 && curDay < 3)
+                {
+                    matchLever.triggerScript.disabledHoverTip = "[ Waiting for end of day ]";
+                }
+                else
+                {
+                    matchLever.triggerScript.disabledHoverTip = "[ Waiting for end of game ]";
+
+                }
                 matchLever.triggerScript.interactable = false;
                 UpdateDisplayWaitingForResult();
             }
@@ -535,6 +536,10 @@ namespace LCDuels
             byte[] bytes = Encoding.UTF8.GetBytes(jsonMessage);
             await localWS.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
             mls.LogInfo("Sent message");
+            if (debug)
+            {
+                mls.LogInfo("message"+jsonMessage);
+            }
         }
 
         public IEnumerator waitUntilGameIsReady()
@@ -553,6 +558,72 @@ namespace LCDuels
             mls.LogInfo("Ending game");
             yield return new WaitForSeconds(3);
             GameNetworkManager.Instance.Disconnect();
+        }
+
+        async Task matchFound()
+        {
+                    matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
+                    matchLever.triggerScript.hoverTip = "[Pull to get ready]";
+                    matchLever.triggerScript.interactable = true;
+                    StartOfRound.Instance.randomMapSeed = seedFromServer;
+                    if (gameMode != 3)
+                    {
+                        System.Random lmfao = new System.Random(seedFromServer);
+                        int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
+                        terminal.groupCredits += startingCash[lmfao.Next(0, startingCash.Length)];
+                        if (lmfao.Next(0, 10000) == 6942)
+                        {
+                            terminal.groupCredits = int.MaxValue;
+                        }
+                if (gameMode == 1)
+                {
+                        StartOfRound.Instance.ChangeLevel(getRandomMapID(lmfao));
+                }
+                else
+                {
+                    StartOfRound.Instance.ChangeLevel(getRandomMapIDByTier(1 + enemyScore + yourScore, lmfao));
+                }
+                        StartOfRound.Instance.SetPlanetsWeather();
+                    }
+                    UpdateInGameStatusText();
+                    string text = "";
+                    if (gameMode == 1)
+                    {
+                            text = "Best of 1\n";
+                    }
+                    else if (gameMode == 2)
+                    {
+                            text = "Best of 3\n";
+
+                    }
+                    else if (gameMode == 3)
+                    {
+                            text = "High quota\n";
+
+                    }
+                    if (StartOfRound.Instance.currentLevel.currentWeather != LevelWeatherType.None)
+                    {
+                        text += "Weather: " + StartOfRound.Instance.currentLevel.currentWeather.ToString();
+                    }
+                    StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
+                    {
+                        "Pull the lever to get ready\nOrbiting: ",
+                        StartOfRound.Instance.currentLevel.PlanetName,
+                        "\n",
+                        text
+                    });
+                    if (enemyScore == 0 && yourScore == 0)
+                    {
+                        HUDManager.Instance.DisplayTip("Match found","Pull the lever to get ready");
+                    }
+                    if (gameMode == 2)
+            {
+            GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
+            foreach (GrabbableObject grabbableObject in grabbableObjects)
+            {
+                grabbableObject.SetScrapValue(0);
+            }
+            }
         }
 
         public void preventSaveLoading()

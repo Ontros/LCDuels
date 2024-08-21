@@ -19,7 +19,15 @@ namespace LCDuels.Patches
         {
             if (LCDuelsModBase.playing)
             {
-                LCDuelsModBase.Instance.currentValue = RoundManager.Instance.scrapCollectedInLevel;
+                GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
+                LCDuelsModBase.Instance.currentValue = 0;
+                foreach (GrabbableObject grabbableObject in grabbableObjects)
+                {
+                    if (grabbableObject.isInShipRoom)
+                    {
+                        LCDuelsModBase.Instance.currentValue += grabbableObject.scrapValue;
+                    }
+                }
                 LCDuelsModBase.Instance.mls.LogInfo("Sending score "+RoundManager.Instance.scrapCollectedInLevel);
                 _ = LCDuelsModBase.Instance.SendMessage(new { type="score",value= RoundManager.Instance.scrapCollectedInLevel.ToString() });
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
