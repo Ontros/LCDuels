@@ -21,16 +21,9 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.playing)
             {
                 LCDuelsModBase.Instance.mls.LogInfo("patchChooseNewRandomMapSeed called");
-                System.Random lmfao = new System.Random(LCDuelsModBase.Instance.seedFromServer);
-                int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
-                lmfao.Next(0, startingCash.Length);
-                if (LCDuelsModBase.Instance.gameMode == 2)
+                if (LCDuelsModBase.Instance.gameMode != 3)
                 {
-                    StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapIDByTier(1+LCDuelsModBase.Instance.enemyScore+LCDuelsModBase.Instance.yourScore,lmfao));
-                }
-                else
-                {
-                    StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.getRandomMapID(lmfao));
+                    StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.foundMapID);
                 }
                 ___randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
                 StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
@@ -76,7 +69,10 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.playing)
             {
                 LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
-                LCDuelsModBase.Instance.WaitingForResult();
+                if (LCDuelsModBase.Instance.gameMode != 3)
+                {
+                    LCDuelsModBase.Instance.WaitingForResult();
+                }
                 LCDuelsModBase.Instance.curDay++;
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
                 _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff", curDay = LCDuelsModBase.Instance.curDay });

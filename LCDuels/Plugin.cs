@@ -64,6 +64,7 @@ namespace LCDuels
         public bool ejected = false;
         public List<SaveFileUISlot> saveFileUISlots = new List<SaveFileUISlot>();
         public TextMeshProUGUI specialTipText;
+        public int foundMapID = 0;
 
         public void ResetValues(bool isEnabled)
         {
@@ -79,21 +80,22 @@ namespace LCDuels
             currentValue = 0;
             gameStarted = false;
             waitingForResult = false;
-            death = false;  
+            death = false;
             gameEndedWithError = false;
             yourScore = 0;
             enemyScore = 0;
             curDay = 1;
             ejected = false;
+            foundMapID = 0;
         }
 
         public int getRandomMapID(System.Random ra)
         {
             foreach (SelectableLevel selectableLevel in StartOfRound.Instance.levels)
             {
-                Console.WriteLine(selectableLevel.levelID+"-"+selectableLevel.name);
+                Console.WriteLine(selectableLevel.levelID + "-" + selectableLevel.name);
             }
-            int output = ra.Next(0, StartOfRound.Instance.levels.Length-1);
+            int output = ra.Next(0, StartOfRound.Instance.levels.Length - 1);
             if (output < 3)
             {
                 return output;
@@ -130,7 +132,8 @@ namespace LCDuels
                 list.Add(9);
                 list.Add(10);
             }
-            int output = ra.Next(0, list.Count-1);
+            int output = ra.Next(0, list.Count - 1);
+            mls.LogInfo("!!!!!!!!!!!!!!!!!!!!!!!!found output" + output);
             return list[output];
         }
 
@@ -140,21 +143,21 @@ namespace LCDuels
             {
                 case 1:
                     HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
-                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
-                    HUDManager.Instance.controlTipLines[2].text = "VS: "+enemyPlayerName;
-                    HUDManager.Instance.controlTipLines[3].text = "Your loot "+currentValue;
+                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName == "Unknown" ? "Waiting for player" : (enemyPlayerName + " is " + enemyPlayerLocation);
+                    HUDManager.Instance.controlTipLines[2].text = "VS: " + enemyPlayerName;
+                    HUDManager.Instance.controlTipLines[3].text = "Your loot " + currentValue;
                     break;
                 case 2:
                     HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
-                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
-                    HUDManager.Instance.controlTipLines[2].text = "You "+yourScore+":"+enemyScore+" "+enemyPlayerName;
-                    HUDManager.Instance.controlTipLines[3].text = "Your loot from this day "+currentValue;
+                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName == "Unknown" ? "Waiting for player" : (enemyPlayerName + " is " + enemyPlayerLocation);
+                    HUDManager.Instance.controlTipLines[2].text = "You " + yourScore + ":" + enemyScore + " " + enemyPlayerName;
+                    HUDManager.Instance.controlTipLines[3].text = "Your loot from this day " + currentValue;
                     break;
                 case 3:
                     HUDManager.Instance.controlTipLines[0].text = "Join dc: dc.ontro.cz";
-                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName=="Unknown"?"Waiting for player":(enemyPlayerName +" is " + enemyPlayerLocation);
-                    HUDManager.Instance.controlTipLines[2].text = "Your total loot "+currentValue;
-                    HUDManager.Instance.controlTipLines[3].text = "Current day: "+LCDuelsModBase.Instance.curDay;
+                    HUDManager.Instance.controlTipLines[1].text = enemyPlayerName == "Unknown" ? "Waiting for player" : (enemyPlayerName + " is " + enemyPlayerLocation);
+                    HUDManager.Instance.controlTipLines[2].text = "Your total loot " + currentValue;
+                    HUDManager.Instance.controlTipLines[3].text = "Current day: " + LCDuelsModBase.Instance.curDay;
                     break;
                 default:
                     HUDManager.Instance.controlTipLines[0].text = "error";
@@ -195,21 +198,22 @@ namespace LCDuels
         public async Task InitWS()
         {
             mls.LogInfo("InitWebSocket");
-            if (localWS == null) {
+            if (localWS == null)
+            {
                 Uri serverUri = new Uri("ws://130.61.35.90:8080");
                 using (ClientWebSocket webSocket = new ClientWebSocket())
                 {
                     localWS = webSocket;
                     await webSocket.ConnectAsync(serverUri, CancellationToken.None);
                     mls.LogInfo("Connected to server");
-            
+
                     // Start receiving messages
                     await ReceiveMessages(webSocket, true);
                 }
             }
             else
             {
-                 _ = Register(localWS);
+                _ = Register(localWS);
             }
         }
 
@@ -331,12 +335,12 @@ namespace LCDuels
 
                 case "opponent_left":
                     mls.LogInfo("Your opponent has left the game.");
-                    HUDManager.Instance.DisplayTip("You won!","You can leave or finish the day. Your opponent has left the game!");
+                    HUDManager.Instance.DisplayTip("You won!", "You can leave or finish the day. Your opponent has left the game!");
                     endOfGameResult = "Won, opponent left";
                     break;
 
                 case "won":
-                    if (gameMode == 2 && (string)data["value"] != "15")
+                    if (gameMode == 2 && (string)data["value"] != "14")
                     {
                         HUDManager.Instance.DisplayTip("Won the day", "You can pull the lever now");
                         yourScore = int.Parse(data["yourScore"].ToString());
@@ -359,24 +363,24 @@ namespace LCDuels
                     }
                     else
                     {
-                    HUDManager.Instance.DisplayTip("You won!","You can leave or finish the day");
-                    switch (data["value"])
-                    {
-                        case "1":
-                            endOfGameResult = "Won, because other player died";
-                            break;
-                        case "3":
-                            endOfGameResult = "Won, because you had more loot";
-                            break;
-                        case "5":
-                            endOfGameResult = "Won, because you had the same amount of loot but you were faster";
-                            break;
-                        case "7":
-                            endOfGameResult = "Won, because other player had no balls";
-                            break;
-                        case "9":
-                            endOfGameResult = "Won, because you had the same amount of loot but you survived longer";
-                            break;
+                        HUDManager.Instance.DisplayTip("You won!", "You can leave or finish the day");
+                        switch (data["value"])
+                        {
+                            case "1":
+                                endOfGameResult = "Won, because other player died";
+                                break;
+                            case "3":
+                                endOfGameResult = "Won, because you had more loot";
+                                break;
+                            case "5":
+                                endOfGameResult = "Won, because you had the same amount of loot but you were faster";
+                                break;
+                            case "7":
+                                endOfGameResult = "Won, because other player had no balls";
+                                break;
+                            case "9":
+                                endOfGameResult = "Won, because you had the same amount of loot but you survived longer";
+                                break;
                             case "11":
                                 endOfGameResult = "Won, because you survived more days";
                                 break;
@@ -386,10 +390,10 @@ namespace LCDuels
                             case "15":
                                 endOfGameResult = "Won, because you got 2 points first";
                                 break;
-                        default:
-                            endOfGameResult = "Won, reason unknown";
-                            break;
-                    }
+                            default:
+                                endOfGameResult = "Won, reason unknown";
+                                break;
+                        }
                     }
                     break;
 
@@ -415,24 +419,24 @@ namespace LCDuels
                     }
                     else
                     {
-                    HUDManager.Instance.DisplayTip("You lost!","You can leave or finish the day");
-                    switch (data["value"])
-                    {
-                        case "2":
-                            endOfGameResult = "Lost, because other player survived";
-                            break;
-                        case "4":
-                            endOfGameResult = "Lost, because you had less loot";
-                            break;
-                        case "6":
-                            endOfGameResult = "Lost, because you had the same amount of loot but you were slower";
-                            break;
-                        case "8":
-                            endOfGameResult = "Lost, because you had no balls";
-                            break;
-                        case "10":
-                            endOfGameResult = "Lost, because you had the same amount of loot but you died sooner";
-                            break;
+                        HUDManager.Instance.DisplayTip("You lost!", "You can leave or finish the day");
+                        switch (data["value"])
+                        {
+                            case "2":
+                                endOfGameResult = "Lost, because other player survived";
+                                break;
+                            case "4":
+                                endOfGameResult = "Lost, because you had less loot";
+                                break;
+                            case "6":
+                                endOfGameResult = "Lost, because you had the same amount of loot but you were slower";
+                                break;
+                            case "8":
+                                endOfGameResult = "Lost, because you had no balls";
+                                break;
+                            case "10":
+                                endOfGameResult = "Lost, because you had the same amount of loot but you died sooner";
+                                break;
                             case "12":
                                 endOfGameResult = "Lost, because you survived less days";
                                 break;
@@ -442,10 +446,10 @@ namespace LCDuels
                             case "16":
                                 endOfGameResult = "Lost, because the enemy got 2 points first";
                                 break;
-                        default:
-                            endOfGameResult = "Lost, reason unknown";
-                            break;
-                    }
+                            default:
+                                endOfGameResult = "Lost, reason unknown";
+                                break;
+                        }
                     }
                     break;
                 case "in_game_error":
@@ -487,13 +491,14 @@ namespace LCDuels
 
         public void UpdateDisplayWaitingForResult()
         {
-            StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player to die or get more then you or lift off\nEnemy loot: "+enemyPlayerScrap+"\nHe is: "+enemyPlayerLocation;
+            StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player to die or get more then you or lift off\nEnemy loot: " + enemyPlayerScrap + "\nHe is: " + enemyPlayerLocation;
         }
 
         async Task Register(ClientWebSocket webSocket)
         {
-            mls.LogInfo(versionString+"version");
-            if (string.IsNullOrEmpty(menuManager.lobbyNameInputField.text)) {
+            mls.LogInfo(versionString + "version");
+            if (string.IsNullOrEmpty(menuManager.lobbyNameInputField.text))
+            {
                 queueName = "";
             }
             var message = new
@@ -501,12 +506,12 @@ namespace LCDuels
                 type = "register",
                 steamId = SteamClient.SteamId.ToString(),
                 steamUsername = SteamClient.Name.ToString(),
-                queueName,                
+                queueName,
                 version = versionString,
                 modVersion,
                 gameMode
             };
-            mls.LogInfo("Registering with username: " + message.steamUsername + "-"+queueName);
+            mls.LogInfo("Registering with username: " + message.steamUsername + "-" + queueName);
             await SendMessage(message);
         }
 
@@ -538,7 +543,7 @@ namespace LCDuels
             mls.LogInfo("Sent message");
             if (debug)
             {
-                mls.LogInfo("message"+jsonMessage);
+                mls.LogInfo("message" + jsonMessage);
             }
         }
 
@@ -550,11 +555,11 @@ namespace LCDuels
             matchLever.StartGame();
             gameStarted = true;
         }
-        
+
         public IEnumerator waitUntilEndOfGame()
         {
             mls.LogInfo("Wait until end of game");
-            yield return new WaitUntil(()=>endOfGameResult!=""&&waitingForResult);
+            yield return new WaitUntil(() => endOfGameResult != "" && waitingForResult);
             mls.LogInfo("Ending game");
             yield return new WaitForSeconds(3);
             GameNetworkManager.Instance.Disconnect();
@@ -562,67 +567,73 @@ namespace LCDuels
 
         async Task matchFound()
         {
-                    matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
-                    matchLever.triggerScript.hoverTip = "[Pull to get ready]";
-                    matchLever.triggerScript.interactable = true;
-                    StartOfRound.Instance.randomMapSeed = seedFromServer;
-                    if (gameMode != 3)
-                    {
-                        System.Random lmfao = new System.Random(seedFromServer);
-                        int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
-                        terminal.groupCredits += startingCash[lmfao.Next(0, startingCash.Length)];
-                        if (lmfao.Next(0, 10000) == 6942)
-                        {
-                            terminal.groupCredits = int.MaxValue;
-                        }
+            matchLever = UnityEngine.Object.FindFirstObjectByType<StartMatchLever>();
+            matchLever.triggerScript.hoverTip = "[Pull to get ready]";
+            matchLever.triggerScript.interactable = true;
+            StartOfRound.Instance.randomMapSeed = seedFromServer;
+            if (gameMode != 3)
+            {
+                mls.LogInfo("match found using seed from server: " + seedFromServer);
+                System.Random lmfao = new System.Random(seedFromServer);
+                int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
+                terminal.groupCredits += startingCash[lmfao.Next(0, startingCash.Length)];
+                if (lmfao.Next(0, 10000) == 6942)
+                {
+                    terminal.groupCredits = int.MaxValue;
+                }
                 if (gameMode == 1)
                 {
-                        StartOfRound.Instance.ChangeLevel(getRandomMapID(lmfao));
+                    foundMapID = getRandomMapID(lmfao);
+                    StartOfRound.Instance.ChangeLevel(foundMapID);
+                    StartOfRound.Instance.SetPlanetsWeather();
                 }
-                else
+                else if (gameMode == 2)
                 {
-                    StartOfRound.Instance.ChangeLevel(getRandomMapIDByTier(1 + enemyScore + yourScore, lmfao));
+                    foundMapID = getRandomMapIDByTier(1 + enemyScore + yourScore, lmfao);
+                    StartOfRound.Instance.ChangeLevel(foundMapID);
+                    StartOfRound.Instance.SetPlanetsWeather();
+                    gameReady = false;
+                    gameStarted = false;
+                    waitingForResult = false;
                 }
-                        StartOfRound.Instance.SetPlanetsWeather();
-                    }
-                    UpdateInGameStatusText();
-                    string text = "";
-                    if (gameMode == 1)
-                    {
-                            text = "Best of 1\n";
-                    }
-                    else if (gameMode == 2)
-                    {
-                            text = "Best of 3\n";
+            }
+            UpdateInGameStatusText();
+            string text = "";
+            if (gameMode == 1)
+            {
+                text = "Best of 1\n";
+            }
+            else if (gameMode == 2)
+            {
+                text = "Best of 3\n";
 
-                    }
-                    else if (gameMode == 3)
-                    {
-                            text = "High quota\n";
-
-                    }
-                    if (StartOfRound.Instance.currentLevel.currentWeather != LevelWeatherType.None)
-                    {
-                        text += "Weather: " + StartOfRound.Instance.currentLevel.currentWeather.ToString();
-                    }
-                    StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
-                    {
+            }
+            else if (gameMode == 3)
+            {
+                text = "High quota\n";
+            }
+            if (StartOfRound.Instance.currentLevel.currentWeather != LevelWeatherType.None)
+            {
+                text += "Weather: " + StartOfRound.Instance.currentLevel.currentWeather.ToString();
+            }
+            StartOfRound.Instance.screenLevelDescription.text = string.Concat(new string[]
+            {
                         "Pull the lever to get ready\nOrbiting: ",
                         StartOfRound.Instance.currentLevel.PlanetName,
                         "\n",
                         text
-                    });
-                    if (enemyScore == 0 && yourScore == 0)
-                    {
-                        HUDManager.Instance.DisplayTip("Match found","Pull the lever to get ready");
-                    }
-                    if (gameMode == 2)
+            });
+            if (enemyScore == 0 && yourScore == 0)
             {
-            GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
-            foreach (GrabbableObject grabbableObject in grabbableObjects)
-            {
-                grabbableObject.SetScrapValue(0);
+                HUDManager.Instance.DisplayTip("Match found", "Pull the lever to get ready");
             }
+            if (gameMode == 2)
+            {
+                GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
+                foreach (GrabbableObject grabbableObject in grabbableObjects)
+                {
+                    grabbableObject.SetScrapValue(0);
+                }
             }
         }
 

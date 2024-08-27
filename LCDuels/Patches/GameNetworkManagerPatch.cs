@@ -17,7 +17,7 @@ namespace LCDuels.Patches
         [HarmonyPrefix]
         static bool SaveGamePatch()
         {
-            if (LCDuelsModBase.Instance.waitingForResult)
+            if (LCDuelsModBase.Instance.waitingForResult && LCDuelsModBase.Instance.gameMode == 1)
             {
                 LCDuelsModBase.Instance.WaitingForResult();
             }

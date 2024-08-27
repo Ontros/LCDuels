@@ -28,8 +28,8 @@ namespace LCDuels.Patches
                         LCDuelsModBase.Instance.currentValue += grabbableObject.scrapValue;
                     }
                 }
-                LCDuelsModBase.Instance.mls.LogInfo("Sending score "+RoundManager.Instance.scrapCollectedInLevel);
-                _ = LCDuelsModBase.Instance.SendMessage(new { type="score",value= RoundManager.Instance.scrapCollectedInLevel.ToString() });
+                LCDuelsModBase.Instance.mls.LogInfo("Sending score "+LCDuelsModBase.Instance.currentValue);
+                _ = LCDuelsModBase.Instance.SendMessage(new { type="score",value=LCDuelsModBase.Instance.currentValue.ToString() });
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
             }
         }
@@ -56,8 +56,11 @@ namespace LCDuels.Patches
         static void patchKillPlayer()
         {
             LCDuelsModBase.Instance.mls.LogInfo("Sending death info");
+            if (LCDuelsModBase.Instance.gameMode != 3)
+            {
             LCDuelsModBase.Instance.death = true;
             LCDuelsModBase.Instance.WaitingForResult();
+            }
             _ = LCDuelsModBase.Instance.SendMessage(new { type = "death" });
         }
     }
