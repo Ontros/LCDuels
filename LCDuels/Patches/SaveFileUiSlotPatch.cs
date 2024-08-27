@@ -30,27 +30,27 @@ namespace LCDuels.Patches
             }
             else
             {
-            Transform text = __instance.gameObject.transform.Find("Text (TMP)");
-            UnityEngine.Debug.Log(text);
-            TextMeshProUGUI fileNameText = text.GetComponent<TextMeshProUGUI>();
-            __instance.fileStatsText.text = "";
-            __instance.fileNotCompatibleAlert.enabled = false;
-            switch (__instance.fileNum)
-            {
-                case -1:
-                    __instance.enabled = false;
-                    break;
-                case 0:
-                    fileNameText.text = "Best of 1";
-                    __instance.transform.parent.Find("EnterAName").GetComponent<TextMeshProUGUI>().text = "Game modes";
-                    break;
-               case 1:
-                    fileNameText.text = "Best of 3";
-                    break;
-               case 2:
-                    fileNameText.text = "High quota";
-                    break;
-            }
+                Transform text = __instance.gameObject.transform.Find("Text (TMP)");
+                UnityEngine.Debug.Log(text);
+                TextMeshProUGUI fileNameText = text.GetComponent<TextMeshProUGUI>();
+                __instance.fileStatsText.text = "";
+                __instance.fileNotCompatibleAlert.enabled = false;
+                switch (__instance.fileNum)
+                {
+                    case -1:
+                        __instance.enabled = false;
+                        break;
+                    case 0:
+                        fileNameText.text = "Best of 1";
+                        __instance.transform.parent.Find("EnterAName").GetComponent<TextMeshProUGUI>().text = "Game modes";
+                        break;
+                    case 1:
+                        fileNameText.text = "Best of 3";
+                        break;
+                    case 2:
+                        fileNameText.text = "Endless";
+                        break;
+                }
             }
         }
 
@@ -71,21 +71,21 @@ namespace LCDuels.Patches
             }
             else
             {
-            switch (__instance.fileNum)
-            {
-                case 0:
-                LCDuelsModBase.Instance.gameMode = 1;
-                    LCDuelsModBase.Instance.specialTipText.text = "Try to get as much loot as possible in 1 day without dying."; 
-                    break;
-               case 1:
-                LCDuelsModBase.Instance.gameMode = 2;
-                    LCDuelsModBase.Instance.specialTipText.text = "You get a point for getting more loot in a day. You have 3 days to win.";
-                    break;
-               case 2:
-                LCDuelsModBase.Instance.gameMode = 3;
-                    LCDuelsModBase.Instance.specialTipText.text = "Whoever survives more days without ejecting wins.";
-                    break;
-            }
+                switch (__instance.fileNum)
+                {
+                    case 0:
+                        LCDuelsModBase.Instance.gameMode = 1;
+                        LCDuelsModBase.Instance.specialTipText.text = "Try to get as much loot as possible in 1 day without dying.";
+                        break;
+                    case 1:
+                        LCDuelsModBase.Instance.gameMode = 2;
+                        LCDuelsModBase.Instance.specialTipText.text = "You get a point for getting more loot in a day (Bo1 evaluation). You have 3 days to win.";
+                        break;
+                    case 2:
+                        LCDuelsModBase.Instance.gameMode = 3;
+                        LCDuelsModBase.Instance.specialTipText.text = "You get a point for getting more loot in a day (Bo1 evaluation). You can play as long as you want.";
+                        break;
+                }
             }
             __instance.SetButtonColorForAllFileSlots();
             LCDuelsModBase.Instance.specialTipText.enabled = true;

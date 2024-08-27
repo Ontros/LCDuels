@@ -21,10 +21,7 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.playing)
             {
                 LCDuelsModBase.Instance.mls.LogInfo("patchChooseNewRandomMapSeed called");
-                if (LCDuelsModBase.Instance.gameMode != 3)
-                {
-                    StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.foundMapID);
-                }
+                StartOfRound.Instance.ChangeLevel(LCDuelsModBase.Instance.foundMapID);
                 ___randomMapSeed = LCDuelsModBase.Instance.seedFromServer;
                 StartOfRound.Instance.SetMapScreenInfoToCurrentLevel();
             }
@@ -69,10 +66,7 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.playing)
             {
                 LCDuelsModBase.Instance.mls.LogInfo("Sending liftoff");
-                if (LCDuelsModBase.Instance.gameMode != 3)
-                {
-                    LCDuelsModBase.Instance.WaitingForResult();
-                }
+                LCDuelsModBase.Instance.WaitingForResult();
                 LCDuelsModBase.Instance.curDay++;
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
                 _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff", curDay = LCDuelsModBase.Instance.curDay });

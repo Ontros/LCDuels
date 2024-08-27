@@ -28,8 +28,8 @@ namespace LCDuels.Patches
                         LCDuelsModBase.Instance.currentValue += grabbableObject.scrapValue;
                     }
                 }
-                LCDuelsModBase.Instance.mls.LogInfo("Sending score "+LCDuelsModBase.Instance.currentValue);
-                _ = LCDuelsModBase.Instance.SendMessage(new { type="score",value=LCDuelsModBase.Instance.currentValue.ToString() });
+                LCDuelsModBase.Instance.mls.LogInfo("Sending score " + LCDuelsModBase.Instance.currentValue);
+                _ = LCDuelsModBase.Instance.SendMessage(new { type = "score", value = LCDuelsModBase.Instance.currentValue.ToString() });
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
             }
         }
@@ -38,16 +38,16 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchUpate(PlayerControllerB __instance)
         {
-            if (__instance.isInHangarShipRoom != LCDuelsModBase.Instance.isInShip && LCDuelsModBase.playing &&!__instance.playersManager.hangarDoorsClosed)
+            if (__instance.isInHangarShipRoom != LCDuelsModBase.Instance.isInShip && LCDuelsModBase.playing && !__instance.playersManager.hangarDoorsClosed)
             {
                 LCDuelsModBase.Instance.isInShip = __instance.isInHangarShipRoom;
-                if (__instance.isInHangarShipRoom ) 
+                if (__instance.isInHangarShipRoom)
                 {
-                    _ = LCDuelsModBase.Instance.SendMessage(new { type= "position", value= "0"});
+                    _ = LCDuelsModBase.Instance.SendMessage(new { type = "position", value = "0" });
                 }
                 else
                 {
-                    _ =LCDuelsModBase.Instance.SendMessage(new { type= "position", value= "1"});
+                    _ = LCDuelsModBase.Instance.SendMessage(new { type = "position", value = "1" });
                 }
             }
         }
@@ -56,11 +56,8 @@ namespace LCDuels.Patches
         static void patchKillPlayer()
         {
             LCDuelsModBase.Instance.mls.LogInfo("Sending death info");
-            if (LCDuelsModBase.Instance.gameMode != 3)
-            {
             LCDuelsModBase.Instance.death = true;
             LCDuelsModBase.Instance.WaitingForResult();
-            }
             _ = LCDuelsModBase.Instance.SendMessage(new { type = "death" });
         }
     }
