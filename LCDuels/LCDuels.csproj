@@ -120,6 +120,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patches\HUDManagerPatch.cs" />
+    <Compile Include="Patches\TimeOfDayP.cs" />
     <Compile Include="Patches\SaveFileUiSlotPatch.cs" />
     <Compile Include="Patches\RoundManagerPatch.cs" />
     <Compile Include="Patches\GameNetworkManagerPatch.cs" />

@@ -188,6 +188,7 @@ namespace LCDuels
             harmony.PatchAll(typeof(EntranceTeleportPatch));
             harmony.PatchAll(typeof(ItemDropShipPatch));
             harmony.PatchAll(typeof(SaveFileUISlotPatch));
+            harmony.PatchAll(typeof(TimeOfDayPatch));
         }
 
         public async Task InitWS()
@@ -280,6 +281,15 @@ namespace LCDuels
                     gameReady = true;
                     break;
 
+                case "reroll":
+                    if (!gameReady)
+                    {
+                        seedFromServer = int.Parse(data["seed"].ToString());
+                        HUDManager.Instance.DisplayTip("Info", "Rerolled");
+                        _ = matchFound();
+                    }
+                    break;
+
                 case "position":
                     string position = data["value"].ToString();
                     switch (position)
@@ -344,7 +354,6 @@ namespace LCDuels
                         death = false;
                         yourScore = int.Parse(data["yourScore"].ToString());
                         enemyScore = int.Parse(data["enemyScore"].ToString());
-                        terminal.groupCredits = 0;
                         GameNetworkManager.Instance.SetLobbyJoinable(false);
                         GameNetworkManager.Instance.disallowConnection = true;
                         StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player\nYou can join our discord (dc.ontro.cz) to find people to play with.";
@@ -401,7 +410,6 @@ namespace LCDuels
                         enemyScore = int.Parse(data["enemyScore"].ToString());
                         gameReady = false;
                         death = false;
-                        terminal.groupCredits = 0;
                         GameNetworkManager.Instance.SetLobbyJoinable(false);
                         GameNetworkManager.Instance.disallowConnection = true;
                         StartOfRound.Instance.screenLevelDescription.text = "Waiting for other player\nYou can join our discord (dc.ontro.cz) to find people to play with.";
@@ -568,7 +576,14 @@ namespace LCDuels
             mls.LogInfo("match found using seed from server: " + seedFromServer);
             System.Random lmfao = new System.Random(seedFromServer);
             int[] startingCash = { 0, 0, 0, 0, 0, 30, 30, 30, 60, 60, 60, 60, 300, 300, 300, 900, 900, 900, 1500, 1500 };
-            terminal.groupCredits += startingCash[lmfao.Next(0, startingCash.Length)];
+            if (gameMode == 1)
+            {
+                terminal.groupCredits += startingCash[lmfao.Next(0, startingCash.Length)];
+            }
+            else if (curDay == 1) 
+            {
+                terminal.groupCredits = startingCash[lmfao.Next(0, startingCash.Length)];
+            }
             if (lmfao.Next(0, 10000) == 6942)
             {
                 terminal.groupCredits = int.MaxValue;
@@ -578,6 +593,9 @@ namespace LCDuels
                 foundMapID = getRandomMapID(lmfao);
                 StartOfRound.Instance.ChangeLevel(foundMapID);
                 StartOfRound.Instance.SetPlanetsWeather();
+                gameReady = false;
+                gameStarted = false;
+                waitingForResult = false;
             }
             else if (gameMode == 2)
             {
@@ -622,6 +640,7 @@ namespace LCDuels
                 GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
                 foreach (GrabbableObject grabbableObject in grabbableObjects)
                 {
+                    terminal.groupCredits += grabbableObject.scrapValue;
                     grabbableObject.SetScrapValue(0);
                 }
             }

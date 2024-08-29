@@ -70,6 +70,10 @@ namespace LCDuels.Patches
                 LCDuelsModBase.Instance.curDay++;
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
                 _ = LCDuelsModBase.Instance.SendMessage(new { type = "liftoff", curDay = LCDuelsModBase.Instance.curDay });
+                if (LCDuelsModBase.Instance.gameMode == 3)
+                {
+                    TimeOfDay.Instance.daysUntilDeadline = 3;
+                }
             }
         }
     }
