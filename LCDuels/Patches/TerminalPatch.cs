@@ -31,7 +31,7 @@ namespace LCDuels.Patches
                 LCDuelsModBase.Instance.UpdateInGameStatusText();
                 Task.Run(LCDuelsModBase.Instance.InitWS);
                 __instance.StartCoroutine(LCDuelsModBase.Instance.waitUntilEndOfGame());
-                StartOfRound.Instance.DisableShipSpeaker();
+                //StartOfRound.Instance.DisableShipSpeaker();
             }
         }
 

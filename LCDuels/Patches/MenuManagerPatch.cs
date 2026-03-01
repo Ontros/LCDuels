@@ -20,9 +20,13 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchOnEnable(MenuManager __instance)
         {
+            if (__instance.isInitScene) return;
+
+            if (GameNetworkManager.Instance == null) return;
+
             if (!GameNetworkManager.Instance.disableSteam)
             {
-                if (LCDbuttonbutton ==  null)
+                if (LCDbuttonbutton == null)
                 {
                     foreach (TextMeshProUGUI publicButton in __instance.HostSettingsOptionsNormal.GetComponentsInChildren<TextMeshProUGUI>())
                     {
@@ -42,12 +46,14 @@ namespace LCDuels.Patches
                     LCDuelsModBase.Instance.versionString = __instance.versionNumberText.text;
                     Button hostButton = Traverse.Create(__instance).Field("startHostButton").GetValue() as Button;
                     LCDuelsModBase.Instance.menuManager = __instance;
+
                     GameObject LCDButton = UnityEngine.Object.Instantiate(hostButton.gameObject);
-                    LCDButton.transform.SetParent(hostButton.transform.parent.GetComponent<RectTransform>(),false);
+                    LCDButton.transform.SetParent(hostButton.transform.parent.GetComponent<RectTransform>(), false);
                     LCDButton.transform.localPosition = hostButton.transform.localPosition + (hostButton.transform.localPosition - __instance.joinCrewButtonContainer.transform.localPosition);
                     LCDButton.transform.localRotation = hostButton.transform.localRotation;
                     LCDButton.transform.localScale = hostButton.transform.localScale;
                     LCDButton.GetComponentInChildren<TextMeshProUGUI>().text = "> Play LC Duels";
+
                     LCDbuttonbutton = LCDButton.GetComponent<Button>();
                     LCDbuttonbutton.onClick.RemoveAllListeners();
                     LCDbuttonbutton.onClick.AddListener(new UnityEngine.Events.UnityAction(OnPlayLCDuelsMenuOpen));
@@ -71,7 +77,7 @@ namespace LCDuels.Patches
         [HarmonyPostfix]
         static void patchOnUpdate(MenuManager __instance)
         {
-            if (LCDuelsModBase.playing && __instance.lobbyTagInputField.gameObject != null)
+            if (LCDuelsModBase.playing && __instance != null && __instance.lobbyTagInputField != null && __instance.lobbyTagInputField.gameObject != null)
             {
                 __instance.lobbyTagInputField.gameObject.SetActive(false);
             }

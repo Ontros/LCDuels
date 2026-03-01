@@ -54,7 +54,11 @@ namespace LCDuels.Patches
             if (LCDuelsModBase.playing)
             {
                 LCDuelsModBase.Instance.wsTerminated = true;
-                _ = LCDuelsModBase.Instance.localWS.CloseAsync(WebSocketCloseStatus.NormalClosure,"Closing the connection normally", CancellationToken.None);
+
+                if (LCDuelsModBase.Instance.localWS != null && LCDuelsModBase.Instance.localWS.State == WebSocketState.Open)
+                {
+                    _ = LCDuelsModBase.Instance.localWS.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing the connection normally", CancellationToken.None);
+                }
             }
         }
 

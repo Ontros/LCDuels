@@ -26,7 +26,7 @@ namespace LCDuels
     {
         private const string modGUID = "onty.duels";
         private const string modName = "LCDuels";
-        private const string modVersion = "1.2.0.0";
+        private const string modVersion = "1.2.1.0";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static LCDuelsModBase Instance;
         internal ManualLogSource mls;
